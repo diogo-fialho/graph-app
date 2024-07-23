@@ -1,0 +1,51 @@
+#tags-box {
+    display: flex;
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.2);
+    height: 200px;
+    max-width: 200px;
+    padding: 10px;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    overflow-y: scroll;
+}
+
+.span-tg {
+    padding: 4px 8px;
+    border-radius: 10px;
+}
+
+.drop-area:hover,
+.drop-area.hovered {
+    box-shadow: var(--color-blue-hightlight) 0px 0px 0px 3px;
+    transform: scale(var(--hover-scale));
+}
+
+.drop-area {
+    width: 300px; 
+    height: 300px; 
+    margin: auto;
+    margin-top: 100px;
+    border: 1px solid black;
+    background-color: var(--color-1);
+    color: rgba(0, 0, 0, .5);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.drop-area i {
+    font-size: 42px;
+}
+
+.drop-area input.ipt {
+    display: none;
+}
+
+.not-visible {
+    display: none;
+}

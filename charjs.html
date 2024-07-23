@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chart.js Line Graph</title>
+    <link rel="stylesheet" href="charjs.css">
+    <script src="charjs.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom/dist/chartjs-plugin-zoom.min.js"></script>
+</head>
+<body>
+    <div id="drop-area" class="drop-area">
+		<input type="file" class="ipt" />
+        <i class="fa fa-file-excel-o" aria-hidden="true"></i>
+		<span class="txt">drop your csv file here</span>
+    </div>
+    <div class="graph-area not-visible">
+        <canvas id="myLineChart" width="400" height="200"></canvas>
+        <canvas id="layer-2" width="1460" height="730" style="
+        position: absolute;
+        top: 0;
+        display: block;
+        box-sizing: border-box;
+        height: 730px;
+        width: 1460px;
+        pointer-events: none;
+    "></canvas>
+        <div class="btns">
+            <button onclick="myLineChart.chart.resetZoom()">Reset Zoom</button>
+            <button onclick="myLineChart.toggleOption(OPTIONS_TYPE.ZOOM)">Toggle Zoom</button>
+            <button onclick="myLineChart.deleteSelectedChartData()">Delete Selected</button>
+            <input type="text" id="tag-name" />
+            <button onclick="myLineChart.setSelectedTagById('tag-name')">Set tag</button>
+            <button onclick="myLineChart.exportCSV()">Export</button>
+        </div>
+        <div id="tags-box">
+    
+        </div>
+    </div>
+    <script>
+
+        var ctx = document.getElementById('myLineChart').getContext('2d');
+        var ctx_l_2 = document.getElementById('layer-2').getContext('2d');
+
+        let config = {
+            colors: {
+                pointBackgroundColor: 'rgba(75, 192, 192, 0.2)',
+                pointSelectedBackgroundColor: 'red',
+                pointBorderColor: 'rgba(75, 192, 192, 1)',
+                pointSelectedBorderColor: 'red',
+            }
+        }
+
+        let options = new DfChartOptions(
+            {
+                type: LABEL_TYPE.DATE,
+                unit: 'hour',
+                text: 'Date',
+                formatInput: (v) => formatDateToISO(v.trim()),
+                formatOutput: (v) => formatDate(new Date(v.trim()), 'dd-MM-yyyy HH:mm')
+            }, 
+            {
+                type: LABEL_TYPE.NUMBER,
+                text: 'Value',
+                formatInput: (v) => isNaN(Number.parseFloat(v)) ? undefined : Number.parseFloat(v),
+            },
+            w_header = true);
+
+        var myLineChart = new DfChart(ctx, config, options);
+        // FILE LOGIC
+        const fileInput = document.querySelector("#drop-area input.ipt");
+        fileInput.addEventListener('change', function(e) {
+            if (e.target.files[0]) {
+                if (dropArea.classList.contains('hovered'))
+                    dropArea.classList.remove('hovered');
+                dropArea.classList.add('not-visible');
+                let loading = document.querySelector('.graph-area');
+                loading.classList.remove('not-visible');
+                myLineChart.readFile(e.target.files[0]);
+                e.target.value = null;
+                e.stopPropagation();
+                e.preventDefault();
+            }
+        });
+
+        const dropArea = document.getElementById('drop-area');
+        dropArea.addEventListener('click', (event) => {
+            fileInput.click();
+        });
+
+        dropArea.addEventListener('dragover', (event) => {
+            dropArea.classList.add('hovered');
+            event.stopPropagation();
+            event.preventDefault();
+            // Style the drag-and-drop as a "copy file" operation.
+            event.dataTransfer.dropEffect = 'copy';
+        });
+
+        dropArea.addEventListener('dragleave', (event) => {
+            dropArea.classList.remove('hovered');
+        });
+
+        dropArea.addEventListener('drop', (event) => {
+            if (dropArea.classList.contains('hovered'))
+                dropArea.classList.remove('hovered');
+            dropArea.classList.add('not-visible');
+            let loading = document.querySelector('.graph-area');
+            loading.classList.remove('not-visible');
+            myLineChart.readFile(event.dataTransfer.files[0]);
+            event.stopPropagation();
+            event.preventDefault();
+        });
+        // FILE LOGIC (END)
+   </script>
+</body>
+</html>
