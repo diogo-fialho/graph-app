@@ -1,3 +1,76 @@
+html,
+body {
+    width: 100vw;
+    max-width: 100vw;
+    min-height: 100vh;
+    padding:0;
+    margin: 0;
+    overflow-x:hidden;
+    background-color: var(--color-4);
+    color: var(--color-1);
+    --color-1: #eeeeee;
+    --color-2: #b55400;
+    --color-3: #393e46;
+    --color-4: #222831;
+    --color-blue-hightlight: rgba(3, 102, 214, .7);
+
+    --hover-scale: 1.04;
+}
+
+.not-visible {
+    display: none !important;
+}
+
+.dialog {
+    display: flex;
+}
+
+.form {
+    width: 60%;
+    padding: 50px;
+    padding-right: 400px;
+}
+
+.form .inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.form .inputs .ipt {
+    display: flex;
+    align-items: center;
+}
+
+.form .inputs label {
+    flex: 4;
+}
+
+.form .inputs input,
+.form .inputs select {
+    flex: 8;
+    height: 32px;
+}
+
+.form .inputs input[type="checkbox"] {
+    height: 24px;
+}
+
+.graph-area {
+    position: relative;
+}
+
+#layer-2 {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: block;
+    box-sizing: border-box;
+    pointer-events: none;
+}
+
 #tags-box {
     display: flex;
     position: absolute;
@@ -43,9 +116,5 @@
 }
 
 .drop-area input.ipt {
-    display: none;
-}
-
-.not-visible {
     display: none;
 }

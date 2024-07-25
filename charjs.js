@@ -1,6 +1,10 @@
 const LABEL_TYPE = {
-    NUMBER: 'number',
-    DATE: 'date',
+    number: 'number',
+    date: 'date',
+}
+
+const TIME_UNITS = {
+    hour: 'hour'
 }
 
 const OPTIONS_TYPE = {
@@ -30,16 +34,102 @@ const OPTIONS_TYPE = {
 // }
 
 class DfChartOptions {
+    X_OPTS_DEFAULT = { type: LABEL_TYPE.number, name: 'x' };
+    Y_OPTS_DEFAULT = { type: LABEL_TYPE.number, name: 'y' };
     constructor(
-        x_options = { type: LABEL_TYPE.NUMBER },
-        y_options = { type: LABEL_TYPE.NUMBER },
+        text,
+        x_options = this.X_OPTS_DEFAULT,
+        y_options = this.Y_OPTS_DEFAULT,
         w_header = false) {
+        this.text = text;
         this.x_options = x_options;
         this.y_options = y_options;
         this.w_header = w_header;
+    }
 
+    clear() {
+        this.text = '';
+        this.x_options = this.X_OPTS_DEFAULT;
+        this.y_options = this.Y_OPTS_DEFAULT;
+        this.w_header = false;
     }
     
+    static loadFromSave(saveData) {
+        return new DfChartOptions(
+            saveData.text,
+            saveData.x_options, 
+            saveData.y_options,
+            saveData.w_header);
+    }
+
+    loadFromForm() {
+        this.text = document.getElementById('graph-name').value;
+        this.x_options = this.loadLabelOptions('x');
+        this.y_options = this.loadLabelOptions('y');
+        this.w_header = document.getElementById('lbl-w-header').checked;
+    }
+
+    returnForSave() {
+        return {
+            text: this.text,
+            x_options: this.x_options,
+            y_options: this.y_options,
+            w_header: this.w_header,
+        }
+    }
+
+    fillForm() {
+        document.getElementById('graph-name').value = this.text ?? '';
+        document.getElementById('lbl-w-header').checked = this.w_header;
+        this.fillFormLabelOptions(this.x_options);
+        this.fillFormLabelOptions(this.y_options);
+    }
+
+    fillFormLabelOptions(label_opts) {
+        if (!label_opts) return;
+
+        document.getElementById(`lbl-${label_opts.name}-name`).value = label_opts.text ?? '';
+        document.getElementById(`lbl-${label_opts.name}-type`).value = label_opts.type;
+
+        switch (label_opts.type) {
+            case LABEL_TYPE.date:
+                document.getElementById(`lbl-${label_opts.name}-unit`).value = label_opts.unit ?? '';
+                document.getElementById(`lbl-${label_opts.name}-format`).value = label_opts.format ?? '';
+                break;
+        }
+    }
+    
+    loadLabelOptions(ele_base_id) {
+        var lbl_type = LABEL_TYPE[document.getElementById(`lbl-${ele_base_id}-type`).value];
+        var opts = {};
+        switch (lbl_type) {
+            case LABEL_TYPE.date:
+                let format = document.getElementById(`lbl-${ele_base_id}-format`).value;
+                opts = {
+                    name: ele_base_id,
+                    type: lbl_type,
+                    unit: TIME_UNITS[document.getElementById(`lbl-${ele_base_id}-unit`).value],
+                    text: document.getElementById(`lbl-${ele_base_id}-name`).value,
+                    format: format,
+                    formatInput: (v) => formatDate(stringToDate(v.trim(), format), 'yyyy-MM-ddTHH:mm:ss.000Z'),
+                    formatOutput: (v) => formatDate(new Date(v.trim()), format),
+                    getMin: (vals) => Math.min.apply(null,new Date(vals)),
+                    getMax: (vals) => Math.max.apply(null,new Date(vals))
+                };//dd-MM-yyyy HH:mm
+                break;
+            default:
+                opts = {
+                    name: ele_base_id,
+                    type: lbl_type,
+                    text: document.getElementById(`lbl-${ele_base_id}-name`).value,
+                    formatInput: (v) => isNaN(Number.parseFloat(v)) ? undefined : Number.parseFloat(v),
+                    getMin: (vals) => Math.min.apply(null,vals),
+                    getMax: (vals) => Math.max.apply(null,vals)
+                };
+
+        }
+        return opts;
+    }
 
     loadScalesOptions(optsVariable) {
         var result = {
@@ -49,7 +139,7 @@ class DfChartOptions {
             }
         }
         
-        if (optsVariable.type == LABEL_TYPE.DATE) {
+        if (optsVariable.type == LABEL_TYPE.date) {
             result = {
                 type: 'time',
                 time: {
@@ -114,6 +204,11 @@ class DfBoxSelectPlugin {
     }
 
     beforeDraw(chart) {
+        var canvas_secondary = document.getElementById('layer-2');
+        var chart_canvas = document.getElementById('myLineChart');
+        debugger
+        canvas_secondary.width = chart_canvas.style.width.replace('px', '');
+        canvas_secondary.height = chart_canvas.style.height.replace('px', '');
         if (this.lastSelected) {
             if (this.currentSelected)
                 for (let point of this.currentSelected) {
@@ -173,14 +268,15 @@ class DfChart {
         this.ctx = ctx;
         this.tagsList = [];
         this.tags_ui_box = document.getElementById('tags-box');
+        this.last_datasets = undefined;
     }
 
-    load(data) {
+    load() {
         this.chart = new Chart(this.ctx, {
             type: 'line',
             // improve this
             plugins: this.PLUGINS,
-            data: data,
+            data: this.last_datasets,
             options: {
                 // improve this
                 plugins: {
@@ -318,9 +414,9 @@ class DfChart {
                 }
             }
             
-            let datasets = {
+            this.last_datasets = {
                 datasets: [{
-                    label: 'Test Data',
+                    label: this.options.text,
                     data: data,
                     backgroundColor: bg_colors,
                     borderColor: bg_border_colors,
@@ -328,8 +424,7 @@ class DfChart {
                     showLine: true
                 }]
             }
-
-            this.load(datasets);
+            this.load();
         }
 
         reader.onerror = function (evt) {
@@ -341,6 +436,20 @@ class DfChart {
 
     toggleOption(type) {
         this.OPTIONS[type].callback();
+    }
+}
+
+class Saver {
+    constructor(key) {
+        this.key = key;
+    }
+
+    save(value) {
+        localStorage.setItem(this.key, value);
+    }
+
+    load() {
+        return localStorage.getItem(this.key);
     }
 }
 
@@ -412,4 +521,32 @@ function formatDate(inputDate, format)  {
     };
 
     return format.replace(/yyyy|MM|dd|HH|hh|mm|ss|tt/g, (match) => parts[match]);
+}
+
+function stringToDate(inputStr, format)  {
+    if (!inputStr) return undefined;
+
+    var date = new Date();
+    const parts = {
+        yyyy: (pos) => date.setYear(strNumOnly.slice(pos, pos + 4)),
+        MM: (pos) => date.setMonth(parseInt(strNumOnly.slice(pos, pos + 2)) - 1),
+        dd: (pos) => date.setDate(strNumOnly.slice(pos, pos + 2)),
+        HH: (pos) => date.setHours(strNumOnly.slice(pos, pos + 2)),
+        // hh: (pos) => date.setMonth(strNumOnly.slice(pos, pos + 2)),
+        mm: (pos) => date.setMinutes(strNumOnly.slice(pos, pos + 2)),
+        ss: (pos) => date.setSeconds(strNumOnly.slice(pos, pos + 2))
+        // inputDate.getHours() < 12 ? 'AM' : 'PM'
+    };
+    var strNumOnly = inputStr.replace(/[^0-9]+/g, "");
+
+    var currentPos = 0;
+    format.replace(/yyyy|MM|dd|HH|hh|mm|ss|tt/g, function(a, b){
+        var size = a.length;
+        parts[a](currentPos);
+        currentPos += size;
+        return b;
+    })
+
+
+    return date;
 }

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chart.js Line Graph</title>
     <link rel="stylesheet" href="charjs.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <script src="charjs.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/luxon"></script>
@@ -13,22 +14,72 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom/dist/chartjs-plugin-zoom.min.js"></script>
 </head>
 <body>
-    <div id="drop-area" class="drop-area">
-		<input type="file" class="ipt" />
-        <i class="fa fa-file-excel-o" aria-hidden="true"></i>
-		<span class="txt">drop your csv file here</span>
+    <div class="dialog">
+        <div id="drop-area" class="drop-area">
+            <input type="file" class="ipt" />
+            <i class="fa fa-file-excel-o" aria-hidden="true"></i>
+            <span class="txt">drop your csv file here</span>
+        </div>
+        <div class="form">
+
+            <div class="inputs">
+                <div class="ipt">
+                    <label for="">Graph name</label>
+                    <input type="text" id="graph-name" onchange="saveForm()" />
+                </div>
+                <div class="ipt">
+                    <label for="">With header</label>
+                    <input type="checkbox" id="lbl-w-header" checked onchange="saveForm()" />
+                </div>
+                <h3>Labels</h3>
+                <h4>Label X</h4>
+                <div class="ipt">
+                    <label for="">Name</label>
+                    <input type="text" id="lbl-x-name" onchange="saveForm()" />
+                </div>
+                <div class="ipt">
+                    <label for="">Type</label>
+                    <select id="lbl-x-type" onchange="onChangeType('x', this.value)">
+                    </select>
+                </div>
+                <div class="ipt not-visible">
+                    <label for="">Format</label>
+                    <input type="text" id="lbl-x-format" onchange="saveForm()" />
+                </div>
+                <div class="ipt not-visible">
+                    <label for="">Unit</label>
+                    <select id="lbl-x-unit" onchange="saveForm()">
+                    </select>
+                </div>
+                <h4>Label Y</h4>
+                <div class="ipt">
+                    <label for="">Name</label>
+                    <input type="text" id="lbl-y-name" onchange="saveForm()" />
+                </div>
+                <div class="ipt">
+                    <label for="">Type</label>
+                    <select id="lbl-y-type" onchange="onChangeType('y', this.value)">
+                    </select>
+                </div>
+                <div class="ipt not-visible">
+                    <label for="">Format</label>
+                    <input type="text" id="lbl-y-format" onchange="saveForm()" />
+                </div>
+                <div class="ipt not-visible">
+                    <label for="">Unit</label>
+                    <select id="lbl-y-unit" onchange="saveForm()">
+                    </select>
+                </div>
+            </div>
+            <div class="btns">
+                <button class="btn btn-secondary" onclick="clearForm()">Cancel</button>
+                <button class="btn btn-primary" onclick="loadFile()">Load</button>
+            </div>
+        </div>
     </div>
     <div class="graph-area not-visible">
         <canvas id="myLineChart" width="400" height="200"></canvas>
-        <canvas id="layer-2" width="1460" height="730" style="
-        position: absolute;
-        top: 0;
-        display: block;
-        box-sizing: border-box;
-        height: 730px;
-        width: 1460px;
-        pointer-events: none;
-    "></canvas>
+        <canvas id="layer-2" width="1460" height="730"></canvas>
         <div class="btns">
             <button onclick="myLineChart.chart.resetZoom()">Reset Zoom</button>
             <button onclick="myLineChart.toggleOption(OPTIONS_TYPE.ZOOM)">Toggle Zoom</button>
@@ -42,10 +93,11 @@
         </div>
     </div>
     <script>
+        loadLabelTypes();
+        loadUnits();
 
-        var ctx = document.getElementById('myLineChart').getContext('2d');
-        var ctx_l_2 = document.getElementById('layer-2').getContext('2d');
-
+        var myLineChart = undefined;
+        var chrt_opts = new DfChartOptions('tmp');
         let config = {
             colors: {
                 pointBackgroundColor: 'rgba(75, 192, 192, 0.2)',
@@ -55,39 +107,133 @@
             }
         }
 
-        let options = new DfChartOptions(
-            {
-                type: LABEL_TYPE.DATE,
-                unit: 'hour',
-                text: 'Date',
-                formatInput: (v) => formatDateToISO(v.trim()),
-                formatOutput: (v) => formatDate(new Date(v.trim()), 'dd-MM-yyyy HH:mm')
-            }, 
-            {
-                type: LABEL_TYPE.NUMBER,
-                text: 'Value',
-                formatInput: (v) => isNaN(Number.parseFloat(v)) ? undefined : Number.parseFloat(v),
-            },
-            w_header = true);
+        const SESSION_KEY = 'chart-opts';
+        var saver = new Saver(SESSION_KEY);
+        var data_opts = saver.load();
+        if (data_opts) {
+            chrt_opts = DfChartOptions.loadFromSave(JSON.parse(data_opts));
+            loadForm();
+        }
 
-        var myLineChart = new DfChart(ctx, config, options);
+        function loadForm() {
+            chrt_opts.fillForm();
+            onChangeType('x', document.getElementById('lbl-x-type').value);
+            onChangeType('y', document.getElementById('lbl-y-type').value);
+        }
+
+        function clearForm() {
+            chrt_opts.clear();
+            loadForm();
+        }
+
+        function saveForm() {
+            chrt_opts.loadFromForm();
+            saver.save(JSON.stringify(chrt_opts.returnForSave()));
+        }
+
+        function loadLabelTypes() {
+            var ele_x = document.getElementById('lbl-x-type');
+            var ele_y = document.getElementById('lbl-y-type');
+            var keys = Object.keys(LABEL_TYPE);
+
+            for (key of keys) {
+                var option = document.createElement('option');
+                option.setAttribute('value', key);
+                option.innerText = LABEL_TYPE[key];
+                ele_x.appendChild(option);
+                ele_y.appendChild(option.cloneNode(true));
+            }
+            
+        }
+
+        function loadUnits() {
+            var ele_x = document.getElementById('lbl-x-unit')
+            var ele_y = document.getElementById('lbl-y-unit')
+            var keys = Object.keys(TIME_UNITS);
+
+            for (key of keys) {
+                var option = document.createElement('option');
+                option.setAttribute('value', key);
+                option.innerText = TIME_UNITS[key];
+                ele_x.appendChild(option);
+                ele_y.appendChild(option.cloneNode(true));
+            }
+            
+        }
+
+        function getOptions(ele_base_id) {
+            var lbl_type = LABEL_TYPE[document.getElementById(`lbl-${ele_base_id}-type`).value];
+            var opts = {};
+            switch (lbl_type) {
+                case LABEL_TYPE.date:
+                    opts = {
+                        type: lbl_type,
+                        unit: TIME_UNITS[document.getElementById(`lbl-${ele_base_id}-unit`).value],
+                        text: document.getElementById(`lbl-${ele_base_id}-name`).value,
+                        formatInput: (v) => formatDateToISO(v.trim()),
+                        formatOutput: (v) => formatDate(new Date(v.trim()), document.getElementById(`lbl-${ele_base_id}-format`).value)
+                    };//dd-MM-yyyy HH:mm
+                    break;
+                default:
+                    opts = {
+                        type: lbl_type,
+                        text: document.getElementById(`lbl-${ele_base_id}-name`).value,
+                        formatInput: (v) => isNaN(Number.parseFloat(v)) ? undefined : Number.parseFloat(v),
+                    };
+
+            }
+            return opts;
+        }
+
+        function loadFile() {
+
+            if (fileInput.files.length > 0) {
+                if (dropArea.classList.contains('hovered'))
+                    dropArea.classList.remove('hovered');
+
+                loadOpts.classList.add('not-visible');
+                let loading = document.querySelector('.graph-area');
+                loading.classList.remove('not-visible');
+                var lbl_type = LABEL_TYPE[document.getElementById('lbl-x-type').value];
+                
+                chrt_opts.loadFromForm();
+                    
+                var ctx = document.getElementById('myLineChart').getContext('2d');
+                myLineChart = new DfChart(ctx, config, chrt_opts);
+                myLineChart.readFile(fileInput.files[0]);
+            }
+        }
+
+        function onChangeType(k, value) {
+            var div_format = document.getElementById(`lbl-${k}-format`).parentElement;
+            var div_unit = document.getElementById(`lbl-${k}-unit`).parentElement;
+            if (LABEL_TYPE[value] == LABEL_TYPE.date) {
+                div_format.classList.remove('not-visible');
+                div_unit.classList.remove('not-visible');
+            }
+            else {
+                if (!div_format.classList.contains('not-visible')) {
+                    div_format.classList.add('not-visible');
+                    div_unit.classList.add('not-visible');
+                }
+            }
+            saveForm();
+        }
+
         // FILE LOGIC
         const fileInput = document.querySelector("#drop-area input.ipt");
         fileInput.addEventListener('change', function(e) {
             if (e.target.files[0]) {
-                if (dropArea.classList.contains('hovered'))
-                    dropArea.classList.remove('hovered');
-                dropArea.classList.add('not-visible');
-                let loading = document.querySelector('.graph-area');
-                loading.classList.remove('not-visible');
-                myLineChart.readFile(e.target.files[0]);
-                e.target.value = null;
+                var ele = dropArea.querySelector('.txt');
+                ele.innerText = 'File loaded: ' + e.target.files[0].name;
+
                 e.stopPropagation();
                 e.preventDefault();
             }
         });
 
         const dropArea = document.getElementById('drop-area');
+        const loadOpts = document.querySelector('.dialog');
         dropArea.addEventListener('click', (event) => {
             fileInput.click();
         });
@@ -107,10 +253,11 @@
         dropArea.addEventListener('drop', (event) => {
             if (dropArea.classList.contains('hovered'))
                 dropArea.classList.remove('hovered');
-            dropArea.classList.add('not-visible');
-            let loading = document.querySelector('.graph-area');
-            loading.classList.remove('not-visible');
-            myLineChart.readFile(event.dataTransfer.files[0]);
+
+            fileInput.files = event.dataTransfer.files;
+            var ele = dropArea.querySelector('.txt');
+            ele.innerText = 'File loaded: ' + fileInput.files[0].name;
+            // fileInput.dispatchEvent(new Event('change'));
             event.stopPropagation();
             event.preventDefault();
         });
