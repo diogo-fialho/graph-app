@@ -45,6 +45,12 @@ class DfChartOptions {
         this.x_options = x_options;
         this.y_options = y_options;
         this.w_header = w_header;
+        this.colors = {
+            pointBackgroundColor: 'rgba(75, 192, 192, 0.2)',
+            pointSelectedBackgroundColor: 'red',
+            pointBorderColor: 'rgba(75, 192, 192, 1)',
+            pointSelectedBorderColor: 'red',
+        };
     }
 
     clear() {
@@ -54,19 +60,18 @@ class DfChartOptions {
         this.w_header = false;
     }
     
-    static loadFromSave(saveData) {
-        return new DfChartOptions(
-            saveData.text,
-            saveData.x_options, 
-            saveData.y_options,
-            saveData.w_header);
+    loadFromSave(saveData) {
+        this.text = saveData.text;
+        this.x_options = saveData.x_options;
+        this.y_options = saveData.y_options;
+        this.w_header = saveData.w_header;
     }
 
-    loadFromForm() {
-        this.text = document.getElementById('graph-name').value;
-        this.x_options = this.loadLabelOptions('x');
-        this.y_options = this.loadLabelOptions('y');
-        this.w_header = document.getElementById('lbl-w-header').checked;
+    loadFromForm(id) {
+        this.text = document.getElementById(`graph-name-${id}`).value;
+        this.x_options = this.loadLabelOptions(id, 'x');
+        this.y_options = this.loadLabelOptions(id, 'y');
+        this.w_header = document.getElementById(`lbl-w-header-${id}`).checked;
     }
 
     returnForSave() {
@@ -78,38 +83,38 @@ class DfChartOptions {
         }
     }
 
-    fillForm() {
-        document.getElementById('graph-name').value = this.text ?? '';
-        document.getElementById('lbl-w-header').checked = this.w_header;
-        this.fillFormLabelOptions(this.x_options);
-        this.fillFormLabelOptions(this.y_options);
+    fillForm(id) {
+        document.getElementById(`graph-name-${id}`).value = this.text ?? '';
+        document.getElementById(`lbl-w-header-${id}`).checked = this.w_header;
+        this.fillFormLabelOptions(id, this.x_options);
+        this.fillFormLabelOptions(id, this.y_options);
     }
 
-    fillFormLabelOptions(label_opts) {
+    fillFormLabelOptions(id, label_opts) {
         if (!label_opts) return;
 
-        document.getElementById(`lbl-${label_opts.name}-name`).value = label_opts.text ?? '';
-        document.getElementById(`lbl-${label_opts.name}-type`).value = label_opts.type;
+        document.getElementById(`lbl-${label_opts.name}-name-${id}`).value = label_opts.text ?? '';
+        document.getElementById(`lbl-${label_opts.name}-type-${id}`).value = label_opts.type;
 
         switch (label_opts.type) {
             case LABEL_TYPE.date:
-                document.getElementById(`lbl-${label_opts.name}-unit`).value = label_opts.unit ?? '';
-                document.getElementById(`lbl-${label_opts.name}-format`).value = label_opts.format ?? '';
+                document.getElementById(`lbl-${label_opts.name}-unit-${id}`).value = label_opts.unit ?? '';
+                document.getElementById(`lbl-${label_opts.name}-format-${id}`).value = label_opts.format ?? '';
                 break;
         }
     }
     
-    loadLabelOptions(ele_base_id) {
-        var lbl_type = LABEL_TYPE[document.getElementById(`lbl-${ele_base_id}-type`).value];
+    loadLabelOptions(id, ele_base_id) {
+        var lbl_type = LABEL_TYPE[document.getElementById(`lbl-${ele_base_id}-type-${id}`).value];
         var opts = {};
         switch (lbl_type) {
             case LABEL_TYPE.date:
-                let format = document.getElementById(`lbl-${ele_base_id}-format`).value;
+                let format = document.getElementById(`lbl-${ele_base_id}-format-${id}`).value;
                 opts = {
                     name: ele_base_id,
                     type: lbl_type,
-                    unit: TIME_UNITS[document.getElementById(`lbl-${ele_base_id}-unit`).value],
-                    text: document.getElementById(`lbl-${ele_base_id}-name`).value,
+                    unit: TIME_UNITS[document.getElementById(`lbl-${ele_base_id}-unit-${id}`).value],
+                    text: document.getElementById(`lbl-${ele_base_id}-name-${id}`).value,
                     format: format,
                     formatInput: (v) => formatDate(stringToDate(v.trim(), format), 'yyyy-MM-ddTHH:mm:ss.000Z'),
                     formatOutput: (v) => formatDate(new Date(v.trim()), format),
@@ -121,7 +126,7 @@ class DfChartOptions {
                 opts = {
                     name: ele_base_id,
                     type: lbl_type,
-                    text: document.getElementById(`lbl-${ele_base_id}-name`).value,
+                    text: document.getElementById(`lbl-${ele_base_id}-name-${id}`).value,
                     formatInput: (v) => isNaN(Number.parseFloat(v)) ? undefined : Number.parseFloat(v),
                     getMin: (vals) => Math.min.apply(null,vals),
                     getMax: (vals) => Math.max.apply(null,vals)
@@ -156,7 +161,7 @@ class DfChartOptions {
 class DfBoxSelectPlugin {
     constructor(options) {
         this.options = options;
-        this.ctx = document.getElementById('layer-2').getContext('2d');
+        this.ctx = document.getElementById(`layer-2-${options.graphId}`).getContext('2d');
         this.activeMouse = false;
         this.startCoord = undefined;
         this.lastCoord = undefined;
@@ -204,9 +209,9 @@ class DfBoxSelectPlugin {
     }
 
     beforeDraw(chart) {
-        var canvas_secondary = document.getElementById('layer-2');
-        var chart_canvas = document.getElementById('myLineChart');
-        debugger
+        var canvas_secondary = document.getElementById(`layer-2-${this.options.graphId}`);
+        var chart_canvas = chart.canvas;
+
         canvas_secondary.width = chart_canvas.style.width.replace('px', '');
         canvas_secondary.height = chart_canvas.style.height.replace('px', '');
         if (this.lastSelected) {
@@ -259,15 +264,16 @@ class DfChart {
 
     PLUGINS = []
 
-    constructor(ctx, config, options = new DfChartOptions()) {
+    constructor(id, ctx, options = new DfChartOptions()) {
+        this.id = id;
         this.options = options;
         this.PLUGINS = [
-            new DfBoxSelectPlugin({ colors: config.colors })
+            new DfBoxSelectPlugin({ graphId: id, colors: options.colors })
         ]
         this.zoom_plugin = new DfZoomPlugin();
         this.ctx = ctx;
         this.tagsList = [];
-        this.tags_ui_box = document.getElementById('tags-box');
+        this.tags_ui_box = document.getElementById(`tags-box-${id}`);
         this.last_datasets = undefined;
     }
 
@@ -409,8 +415,8 @@ class DfChart {
                         y:  val_y,
                         tag: points[2] && points[2] != '' ? { text: points[2], color: getRandomColor() } : undefined
                     })
-                    bg_colors.push(config.colors.pointBackgroundColor);
-                    bg_border_colors.push(config.colors.pointBorderColor);
+                    bg_colors.push(this.options.colors.pointBackgroundColor);
+                    bg_border_colors.push(this.options.colors.pointBorderColor);
                 }
             }
             

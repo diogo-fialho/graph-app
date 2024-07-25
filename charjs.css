@@ -60,7 +60,7 @@ body {
     position: relative;
 }
 
-#layer-2 {
+.layer-2 {
     position: absolute;
     top: 0;
     bottom: 0;
@@ -71,7 +71,7 @@ body {
     pointer-events: none;
 }
 
-#tags-box {
+.tags-box {
     display: flex;
     position: absolute;
     top: 20px;

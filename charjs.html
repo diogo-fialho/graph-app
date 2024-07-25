@@ -14,126 +14,230 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom/dist/chartjs-plugin-zoom.min.js"></script>
 </head>
 <body>
-    <div class="dialog">
-        <div id="drop-area" class="drop-area">
-            <input type="file" class="ipt" />
-            <i class="fa fa-file-excel-o" aria-hidden="true"></i>
-            <span class="txt">drop your csv file here</span>
-        </div>
-        <div class="form">
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#home" type="button" role="tab" aria-controls="home" aria-selected="true">Home</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="false">Profile</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="contact-tab" data-bs-toggle="tab" data-bs-target="#contact" type="button" role="tab" aria-controls="contact" aria-selected="false">Contact</button>
+        </li>
+      </ul>
+      <div class="tab-content" id="myTabContent">
+        <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+            <div id="graph-0" class="dialog">
+                <div id="drop-area-0" class="drop-area">
+                    <input type="file" class="ipt" />
+                    <i class="fa fa-file-excel-o" aria-hidden="true"></i>
+                    <span class="txt">drop your csv file here</span>
+                </div>
+                <div class="form">
 
-            <div class="inputs">
-                <div class="ipt">
-                    <label for="">Graph name</label>
-                    <input type="text" id="graph-name" onchange="saveForm()" />
-                </div>
-                <div class="ipt">
-                    <label for="">With header</label>
-                    <input type="checkbox" id="lbl-w-header" checked onchange="saveForm()" />
-                </div>
-                <h3>Labels</h3>
-                <h4>Label X</h4>
-                <div class="ipt">
-                    <label for="">Name</label>
-                    <input type="text" id="lbl-x-name" onchange="saveForm()" />
-                </div>
-                <div class="ipt">
-                    <label for="">Type</label>
-                    <select id="lbl-x-type" onchange="onChangeType('x', this.value)">
-                    </select>
-                </div>
-                <div class="ipt not-visible">
-                    <label for="">Format</label>
-                    <input type="text" id="lbl-x-format" onchange="saveForm()" />
-                </div>
-                <div class="ipt not-visible">
-                    <label for="">Unit</label>
-                    <select id="lbl-x-unit" onchange="saveForm()">
-                    </select>
-                </div>
-                <h4>Label Y</h4>
-                <div class="ipt">
-                    <label for="">Name</label>
-                    <input type="text" id="lbl-y-name" onchange="saveForm()" />
-                </div>
-                <div class="ipt">
-                    <label for="">Type</label>
-                    <select id="lbl-y-type" onchange="onChangeType('y', this.value)">
-                    </select>
-                </div>
-                <div class="ipt not-visible">
-                    <label for="">Format</label>
-                    <input type="text" id="lbl-y-format" onchange="saveForm()" />
-                </div>
-                <div class="ipt not-visible">
-                    <label for="">Unit</label>
-                    <select id="lbl-y-unit" onchange="saveForm()">
-                    </select>
+                    <div class="inputs">
+                        <div class="ipt">
+                            <label for="">Graph name</label>
+                            <input type="text" id="graph-name-0" onchange="saveForm(0)" />
+                        </div>
+                        <div class="ipt">
+                            <label for="">With header</label>
+                            <input type="checkbox" id="lbl-w-header-0" checked onchange="saveForm(0)" />
+                        </div>
+                        <h3>Labels</h3>
+                        <h4>Label X</h4>
+                        <div class="ipt">
+                            <label for="">Name</label>
+                            <input type="text" id="lbl-x-name-0" onchange="saveForm(0)" />
+                        </div>
+                        <div class="ipt">
+                            <label for="">Type</label>
+                            <select id="lbl-x-type-0" onchange="onChangeType(0, 'x', this.value)">
+                            </select>
+                        </div>
+                        <div class="ipt not-visible">
+                            <label for="">Format</label>
+                            <input type="text" id="lbl-x-format-0" onchange="saveForm(0)" />
+                        </div>
+                        <div class="ipt not-visible">
+                            <label for="">Unit</label>
+                            <select id="lbl-x-unit-0" onchange="saveForm(0)">
+                            </select>
+                        </div>
+                        <h4>Label Y</h4>
+                        <div class="ipt">
+                            <label for="">Name</label>
+                            <input type="text" id="lbl-y-name-0" onchange="saveForm(0)" />
+                        </div>
+                        <div class="ipt">
+                            <label for="">Type</label>
+                            <select id="lbl-y-type-0" onchange="onChangeType(0, 'y', this.value)">
+                            </select>
+                        </div>
+                        <div class="ipt not-visible">
+                            <label for="">Format</label>
+                            <input type="text" id="lbl-y-format-0" onchange="saveForm(0)" />
+                        </div>
+                        <div class="ipt not-visible">
+                            <label for="">Unit</label>
+                            <select id="lbl-y-unit-0" onchange="saveForm(0)">
+                            </select>
+                        </div>
+                    </div>
+                    <div class="btns">
+                        <button class="btn btn-secondary" onclick="clearForm(0)">Cancel</button>
+                        <button class="btn btn-primary" onclick="loadFile(0)">Load</button>
+                    </div>
                 </div>
             </div>
-            <div class="btns">
-                <button class="btn btn-secondary" onclick="clearForm()">Cancel</button>
-                <button class="btn btn-primary" onclick="loadFile()">Load</button>
+            <div id="ga-0" class="graph-area not-visible">
+                <canvas id="myLineChart-0" width="400" height="200"></canvas>
+                <canvas id="layer-2-0" class="layer-2" width="1460" height="730"></canvas>
+                <div class="btns">
+                    <button onclick="lineCharts[0].chart.resetZoom()">Reset Zoom</button>
+                    <button onclick="lineCharts[0].toggleOption(OPTIONS_TYPE.ZOOM)">Toggle Zoom</button>
+                    <button onclick="lineCharts[0].deleteSelectedChartData()">Delete Selected</button>
+                    <input type="text" id="tag-name-0" />
+                    <button onclick="lineCharts[0].setSelectedTagById('tag-name-0')">Set tag</button>
+                    <button onclick="lineCharts[0].exportCSV()">Export</button>
+                </div>
+                <div id="tags-box-0" class="tags-box">
+            
+                </div>
             </div>
         </div>
-    </div>
-    <div class="graph-area not-visible">
-        <canvas id="myLineChart" width="400" height="200"></canvas>
-        <canvas id="layer-2" width="1460" height="730"></canvas>
-        <div class="btns">
-            <button onclick="myLineChart.chart.resetZoom()">Reset Zoom</button>
-            <button onclick="myLineChart.toggleOption(OPTIONS_TYPE.ZOOM)">Toggle Zoom</button>
-            <button onclick="myLineChart.deleteSelectedChartData()">Delete Selected</button>
-            <input type="text" id="tag-name" />
-            <button onclick="myLineChart.setSelectedTagById('tag-name')">Set tag</button>
-            <button onclick="myLineChart.exportCSV()">Export</button>
+        <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+            <div id="graph-1" class="dialog">
+                <div id="drop-area-1" class="drop-area">
+                    <input type="file" class="ipt" />
+                    <i class="fa fa-file-excel-o" aria-hidden="true"></i>
+                    <span class="txt">drop your csv file here</span>
+                </div>
+                <div class="form">
+
+                    <div class="inputs">
+                        <div class="ipt">
+                            <label for="">Graph name</label>
+                            <input type="text" id="graph-name-1" onchange="saveForm(1)" />
+                        </div>
+                        <div class="ipt">
+                            <label for="">With header</label>
+                            <input type="checkbox" id="lbl-w-header-1" checked onchange="saveForm(1)" />
+                        </div>
+                        <h3>Labels</h3>
+                        <h4>Label X</h4>
+                        <div class="ipt">
+                            <label for="">Name</label>
+                            <input type="text" id="lbl-x-name-1" onchange="saveForm(1)" />
+                        </div>
+                        <div class="ipt">
+                            <label for="">Type</label>
+                            <select id="lbl-x-type-1" onchange="onChangeType(1, 'x', this.value)">
+                            </select>
+                        </div>
+                        <div class="ipt not-visible">
+                            <label for="">Format</label>
+                            <input type="text" id="lbl-x-format-1" onchange="saveForm(1)" />
+                        </div>
+                        <div class="ipt not-visible">
+                            <label for="">Unit</label>
+                            <select id="lbl-x-unit-1" onchange="saveForm(1)">
+                            </select>
+                        </div>
+                        <h4>Label Y</h4>
+                        <div class="ipt">
+                            <label for="">Name</label>
+                            <input type="text" id="lbl-y-name-1" onchange="saveForm(1)" />
+                        </div>
+                        <div class="ipt">
+                            <label for="">Type</label>
+                            <select id="lbl-y-type-1" onchange="onChangeType(1, 'y', this.value)">
+                            </select>
+                        </div>
+                        <div class="ipt not-visible">
+                            <label for="">Format</label>
+                            <input type="text" id="lbl-y-format-1" onchange="saveForm(1)" />
+                        </div>
+                        <div class="ipt not-visible">
+                            <label for="">Unit</label>
+                            <select id="lbl-y-unit-1" onchange="saveForm(1)">
+                            </select>
+                        </div>
+                    </div>
+                    <div class="btns">
+                        <button class="btn btn-secondary" onclick="clearForm(1)">Cancel</button>
+                        <button class="btn btn-primary" onclick="loadFile(1)">Load</button>
+                    </div>
+                </div>
+            </div>
+            <div id="ga-1" class="graph-area not-visible">
+                <canvas id="myLineChart-1" width="400" height="200"></canvas>
+                <canvas id="layer-2-1" class="layer-2" width="1460" height="730"></canvas>
+                <div class="btns">
+                    <button onclick="lineCharts[1].chart.resetZoom()">Reset Zoom</button>
+                    <button onclick="lineCharts[1].toggleOption(OPTIONS_TYPE.ZOOM)">Toggle Zoom</button>
+                    <button onclick="lineCharts[1].deleteSelectedChartData()">Delete Selected</button>
+                    <input type="text" id="tag-name-1" />
+                    <button onclick="lineCharts[1].setSelectedTagById('tag-name-1')">Set tag</button>
+                    <button onclick="lineCharts[1].exportCSV()">Export</button>
+                </div>
+                <div id="tags-box-1" class="tags-box">
+            
+                </div>
+            </div>
         </div>
-        <div id="tags-box">
-    
+        <div class="tab-pane fade" id="contact" role="tabpanel" aria-labelledby="contact-tab">
+            ..d.
         </div>
-    </div>
+      </div>
     <script>
-        loadLabelTypes();
-        loadUnits();
+        let chrts_opts = {};
+        let savers = {};
+        let lineCharts = {};
+        start(0);
+        start(1);
+        function start(id) {
+            loadLabelTypes(id);
+            loadUnits(id);
 
-        var myLineChart = undefined;
-        var chrt_opts = new DfChartOptions('tmp');
-        let config = {
-            colors: {
-                pointBackgroundColor: 'rgba(75, 192, 192, 0.2)',
-                pointSelectedBackgroundColor: 'red',
-                pointBorderColor: 'rgba(75, 192, 192, 1)',
-                pointSelectedBorderColor: 'red',
+            let fileInput = document.querySelector(`#drop-area-${id} input.ipt`);
+            loadFileInput(fileInput);
+
+            const dropArea = fileInput.parentElement;
+
+            chrts_opts[id] = new DfChartOptions('tmp-'+id);
+            
+            const SESSION_KEY = 'chart-opts-' + id;
+            savers[id] = new Saver(SESSION_KEY);
+            
+            var data_opts = savers[id].load();
+            if (data_opts) {
+                chrts_opts[id].loadFromSave(JSON.parse(data_opts));
+                loadForm(id);
             }
+
+        }
+        
+
+        function loadForm(id) {
+            chrts_opts[id].fillForm(id);
+            onChangeType(id, 'x', document.getElementById(`lbl-x-type-${id}`).value);
+            onChangeType(id, 'y', document.getElementById(`lbl-y-type-${id}`).value);
         }
 
-        const SESSION_KEY = 'chart-opts';
-        var saver = new Saver(SESSION_KEY);
-        var data_opts = saver.load();
-        if (data_opts) {
-            chrt_opts = DfChartOptions.loadFromSave(JSON.parse(data_opts));
-            loadForm();
+        function clearForm(id) {
+            chrts_opts[id].clear();
+            loadForm(id);
         }
 
-        function loadForm() {
-            chrt_opts.fillForm();
-            onChangeType('x', document.getElementById('lbl-x-type').value);
-            onChangeType('y', document.getElementById('lbl-y-type').value);
+        function saveForm(id) {
+            chrts_opts[id].loadFromForm(id);
+            savers[id].save(JSON.stringify(chrts_opts[id].returnForSave()));
         }
 
-        function clearForm() {
-            chrt_opts.clear();
-            loadForm();
-        }
-
-        function saveForm() {
-            chrt_opts.loadFromForm();
-            saver.save(JSON.stringify(chrt_opts.returnForSave()));
-        }
-
-        function loadLabelTypes() {
-            var ele_x = document.getElementById('lbl-x-type');
-            var ele_y = document.getElementById('lbl-y-type');
+        function loadLabelTypes(id) {
+            var ele_x = document.getElementById(`lbl-x-type-${id}`);
+            var ele_y = document.getElementById(`lbl-y-type-${id}`);
             var keys = Object.keys(LABEL_TYPE);
 
             for (key of keys) {
@@ -146,9 +250,9 @@
             
         }
 
-        function loadUnits() {
-            var ele_x = document.getElementById('lbl-x-unit')
-            var ele_y = document.getElementById('lbl-y-unit')
+        function loadUnits(id) {
+            var ele_x = document.getElementById(`lbl-x-unit-${id}`)
+            var ele_y = document.getElementById(`lbl-y-unit-${id}`)
             var keys = Object.keys(TIME_UNITS);
 
             for (key of keys) {
@@ -161,52 +265,30 @@
             
         }
 
-        function getOptions(ele_base_id) {
-            var lbl_type = LABEL_TYPE[document.getElementById(`lbl-${ele_base_id}-type`).value];
-            var opts = {};
-            switch (lbl_type) {
-                case LABEL_TYPE.date:
-                    opts = {
-                        type: lbl_type,
-                        unit: TIME_UNITS[document.getElementById(`lbl-${ele_base_id}-unit`).value],
-                        text: document.getElementById(`lbl-${ele_base_id}-name`).value,
-                        formatInput: (v) => formatDateToISO(v.trim()),
-                        formatOutput: (v) => formatDate(new Date(v.trim()), document.getElementById(`lbl-${ele_base_id}-format`).value)
-                    };//dd-MM-yyyy HH:mm
-                    break;
-                default:
-                    opts = {
-                        type: lbl_type,
-                        text: document.getElementById(`lbl-${ele_base_id}-name`).value,
-                        formatInput: (v) => isNaN(Number.parseFloat(v)) ? undefined : Number.parseFloat(v),
-                    };
-
-            }
-            return opts;
-        }
-
-        function loadFile() {
-
+        function loadFile(id) {
+            let fileInput = document.querySelector(`#drop-area-${id} .ipt`);
             if (fileInput.files.length > 0) {
+                let dropArea = fileInput.parentElement;
                 if (dropArea.classList.contains('hovered'))
                     dropArea.classList.remove('hovered');
 
+                const loadOpts = document.querySelector(`#graph-${id}.dialog`);
                 loadOpts.classList.add('not-visible');
-                let loading = document.querySelector('.graph-area');
+                let loading = document.querySelector(`#ga-${id}.graph-area`);
                 loading.classList.remove('not-visible');
-                var lbl_type = LABEL_TYPE[document.getElementById('lbl-x-type').value];
+                var lbl_type = LABEL_TYPE[document.getElementById(`lbl-x-type-${id}`).value];
                 
-                chrt_opts.loadFromForm();
+                chrts_opts[id].loadFromForm(id);
                     
-                var ctx = document.getElementById('myLineChart').getContext('2d');
-                myLineChart = new DfChart(ctx, config, chrt_opts);
-                myLineChart.readFile(fileInput.files[0]);
+                var ctx = document.getElementById(`myLineChart-${id}`).getContext('2d');
+                lineCharts[id] = new DfChart(id, ctx, chrts_opts[id]);
+                lineCharts[id].readFile(fileInput.files[0]);
             }
         }
 
-        function onChangeType(k, value) {
-            var div_format = document.getElementById(`lbl-${k}-format`).parentElement;
-            var div_unit = document.getElementById(`lbl-${k}-unit`).parentElement;
+        function onChangeType(id, k, value) {
+            var div_format = document.getElementById(`lbl-${k}-format-${id}`).parentElement;
+            var div_unit = document.getElementById(`lbl-${k}-unit-${id}`).parentElement;
             if (LABEL_TYPE[value] == LABEL_TYPE.date) {
                 div_format.classList.remove('not-visible');
                 div_unit.classList.remove('not-visible');
@@ -217,51 +299,53 @@
                     div_unit.classList.add('not-visible');
                 }
             }
-            saveForm();
+            saveForm(id);
         }
 
-        // FILE LOGIC
-        const fileInput = document.querySelector("#drop-area input.ipt");
-        fileInput.addEventListener('change', function(e) {
-            if (e.target.files[0]) {
-                var ele = dropArea.querySelector('.txt');
-                ele.innerText = 'File loaded: ' + e.target.files[0].name;
+        function loadFileInput(fileInput) {
+            var dropArea = fileInput.parentElement;
+            dropArea.addEventListener('click', (event) => {
+                fileInput.click();
+            });
 
-                e.stopPropagation();
-                e.preventDefault();
-            }
-        });
+            dropArea.addEventListener('dragover', (event) => {
+                dropArea.classList.add('hovered');
+                event.stopPropagation();
+                event.preventDefault();
+                // Style the drag-and-drop as a "copy file" operation.
+                event.dataTransfer.dropEffect = 'copy';
+            });
 
-        const dropArea = document.getElementById('drop-area');
-        const loadOpts = document.querySelector('.dialog');
-        dropArea.addEventListener('click', (event) => {
-            fileInput.click();
-        });
-
-        dropArea.addEventListener('dragover', (event) => {
-            dropArea.classList.add('hovered');
-            event.stopPropagation();
-            event.preventDefault();
-            // Style the drag-and-drop as a "copy file" operation.
-            event.dataTransfer.dropEffect = 'copy';
-        });
-
-        dropArea.addEventListener('dragleave', (event) => {
-            dropArea.classList.remove('hovered');
-        });
-
-        dropArea.addEventListener('drop', (event) => {
-            if (dropArea.classList.contains('hovered'))
+            dropArea.addEventListener('dragleave', (event) => {
                 dropArea.classList.remove('hovered');
+            });
 
-            fileInput.files = event.dataTransfer.files;
-            var ele = dropArea.querySelector('.txt');
-            ele.innerText = 'File loaded: ' + fileInput.files[0].name;
-            // fileInput.dispatchEvent(new Event('change'));
-            event.stopPropagation();
-            event.preventDefault();
-        });
+            dropArea.addEventListener('drop', (event) => {
+                if (dropArea.classList.contains('hovered'))
+                    dropArea.classList.remove('hovered');
+
+                fileInput.files = event.dataTransfer.files;
+                var ele = dropArea.querySelector('.txt');
+                ele.innerText = 'File loaded: ' + fileInput.files[0].name;
+                // fileInput.dispatchEvent(new Event('change'));
+                event.stopPropagation();
+                event.preventDefault();
+            });
+
+            fileInput.addEventListener('change', function(e) {
+                if (e.target.files[0]) {
+                    var ele = fileInput.parentElement.querySelector('.txt');
+                    ele.innerText = 'File loaded: ' + e.target.files[0].name;
+
+                    e.stopPropagation();
+                    e.preventDefault();
+                }
+            });
+            // FILE LOGIC
+        }
+        
         // FILE LOGIC (END)
    </script>
+   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 </body>
 </html>
