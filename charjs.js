@@ -152,11 +152,14 @@ class DfChartOptions {
         }
         
         if (optsVariable.type == LABEL_TYPE.date) {
+            var timeOpts = {
+                unit: optsVariable.unit,
+                displayFormats: {}
+            }
+            timeOpts.displayFormats[optsVariable.unit] = optsVariable.format;
             result = {
                 type: 'time',
-                time: {
-                    unit: optsVariable.unit
-                },
+                time: timeOpts,
                 title: result.title
             }
         }
