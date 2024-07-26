@@ -40,11 +40,13 @@ class DfChartOptions {
         text,
         x_options = this.X_OPTS_DEFAULT,
         y_options = this.Y_OPTS_DEFAULT,
-        w_header = false) {
+        w_header = false,
+        w_tags = false) {
         this.text = text;
         this.x_options = x_options;
         this.y_options = y_options;
         this.w_header = w_header;
+        this.w_tags = w_tags;
         this.colors = {
             pointBackgroundColor: 'rgba(75, 192, 192, 0.2)',
             pointSelectedBackgroundColor: 'red',
@@ -58,6 +60,7 @@ class DfChartOptions {
         this.x_options = this.X_OPTS_DEFAULT;
         this.y_options = this.Y_OPTS_DEFAULT;
         this.w_header = false;
+        this.w_tags = false;
     }
     
     loadFromSave(saveData) {
@@ -65,6 +68,7 @@ class DfChartOptions {
         this.x_options = saveData.x_options;
         this.y_options = saveData.y_options;
         this.w_header = saveData.w_header;
+        this.w_tags = saveData.w_tags;
     }
 
     loadFromForm(id) {
@@ -72,6 +76,7 @@ class DfChartOptions {
         this.x_options = this.loadLabelOptions(id, 'x');
         this.y_options = this.loadLabelOptions(id, 'y');
         this.w_header = document.getElementById(`lbl-w-header-${id}`).checked;
+        this.w_tags = document.getElementById(`lbl-w-tags-${id}`).checked;
     }
 
     returnForSave() {
@@ -80,12 +85,14 @@ class DfChartOptions {
             x_options: this.x_options,
             y_options: this.y_options,
             w_header: this.w_header,
+            w_tags: this.w_tags,
         }
     }
 
     fillForm(id) {
         document.getElementById(`graph-name-${id}`).value = this.text ?? '';
         document.getElementById(`lbl-w-header-${id}`).checked = this.w_header;
+        document.getElementById(`lbl-w-tags-${id}`).checked = this.w_tags;
         this.fillFormLabelOptions(id, this.x_options);
         this.fillFormLabelOptions(id, this.y_options);
     }
@@ -179,7 +186,7 @@ class DfBoxSelectPlugin {
         else if (this.activeMouse && event.type == 'mousemove') {
             let canvas_client_rect = this.ctx.canvas.getBoundingClientRect();
             this.lastCoord = [event.native.clientX - canvas_client_rect.left, event.native.clientY - canvas_client_rect.top, event.x, event.y];
-            this.ctx.clearRect(0, 0, 1460, 730);
+            this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
             this.ctx.beginPath();
             this.ctx.strokeStyle =  'red';
             this.ctx.moveTo(this.startCoord[0], this.startCoord[1]);
@@ -192,7 +199,7 @@ class DfBoxSelectPlugin {
         }
         else if (this.activeMouse && event.type == 'click') {
             this.activeMouse = false;
-            this.ctx.clearRect(0, 0, 1460, 730);
+            this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
             if (this.lastCoord) {
                 var c_dataset = chart.getDatasetMeta(0);
                 this.lastSelected = c_dataset.data.filter(p =>
@@ -290,7 +297,7 @@ class DfChart {
                         zoom: this.zoom_plugin.getOptions()
                     }
                 },
-                events: ['mousedown', 'mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'],
+                events: ['contextmenu', 'mousedown', 'mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'],
                 scales: this.loadScales()
             }
         });
@@ -313,13 +320,21 @@ class DfChart {
         this.tags_ui_box.innerHTML = '';
         for(let tag of this.tagsList) {
             var span = document.createElement('span');
-            span.classList.add('span-tg');
-            span.style.backgroundColor = tag.color;
+            var spanRemove = document.createElement('span');
+            span.setAttribute('class', 'badge bg-secondary');
+            // span.style.backgroundColor = tag.color;
             span.innerText = tag.text;
+            spanRemove.innerText = 'x';
             span.addEventListener('click', () => {
                 this.selectTag(tag.text);
             });
-
+            spanRemove.addEventListener('click', (e) => {
+                this.removeTag(tag.text);
+                e.stopPropagation();
+                e.preventDefault();
+            });
+            
+            span.appendChild(spanRemove);
             this.tags_ui_box.appendChild(span);
         }
 
@@ -369,6 +384,17 @@ class DfChart {
         this.chart.update();
     }
 
+    removeTag(tagName) {
+        this.chart.data.datasets[0].data = this.chart.getDatasetMeta(0).data
+            .map(p => {
+                if (p.$context.raw.tag?.text == tagName)
+                    delete p.$context.raw.tag;
+                return p.$context.raw;
+            });
+        this.tagsList = this.tagsList.filter(t => t.text != tagName);
+        this.updateTagBox();
+    }
+
     exportCSV() {
         let data = this.getData();
         if (data.length > 0) {
@@ -413,7 +439,7 @@ class DfChart {
                     data.push({
                         x: val_x,
                         y:  val_y,
-                        tag: points[2] && points[2] != '' ? { text: points[2], color: getRandomColor() } : undefined
+                        tag: this.options.w_tags ? points[2] && points[2] != '' ? { text: points[2], color: getRandomColor() } : undefined : undefined
                     })
                     bg_colors.push(this.options.colors.pointBackgroundColor);
                     bg_border_colors.push(this.options.colors.pointBorderColor);

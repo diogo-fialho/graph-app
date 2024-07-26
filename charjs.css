@@ -7,7 +7,6 @@ body {
     margin: 0;
     overflow-x:hidden;
     /* background-color: var(--color-4); */
-    color: var(--color-1);
     --color-1: #eeeeee;
     --color-2: #b55400;
     --color-3: #393e46;
@@ -71,11 +70,32 @@ body {
     pointer-events: none;
 }
 
-.tags-box {
-    display: flex;
+.menus {
     position: absolute;
     top: 20px;
     right: 20px;
+    display: flex;
+    flex-direction: column;
+}
+.menus .btns {
+    display: flex;
+    flex-direction: column;
+    height: fit-content;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.menus .btns > button {
+    width: fit-content;
+    padding: 5px;
+}
+
+.menus .tag-search input {
+    width: 100px;
+}
+
+.tags-box {
+    display: flex;
     background: rgba(0, 0, 0, 0.2);
     height: 200px;
     max-width: 200px;
@@ -84,6 +104,19 @@ body {
     align-items: center;
     gap: 4px;
     overflow-y: scroll;
+}
+
+.tags-box > span > span {
+    margin-left: 5px;
+}
+
+.tags-box > span:hover {
+    opacity: 0.7;
+    cursor: pointer;
+}
+
+.tags-box > span > span:hover {
+    background-color: rgba(0, 0, 0, .5);
 }
 
 .span-tg {
@@ -139,4 +172,11 @@ body {
 .nav-item:not(.new-tab) .nav-link-btn.close:hover {
     background-color: lightgray;
     cursor: pointer;
+}
+
+.tab-content,
+.tab-pane,
+.graph-area {
+    height: calc(100vh - 42px);
+    width: 100vw;
 }

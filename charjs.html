@@ -14,6 +14,95 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom/dist/chartjs-plugin-zoom.min.js"></script>
 </head>
 <body>
+    <div id="tab-graph-template" class="not-visible">
+        <div id="graph-{{id}}" class="dialog">
+            <div id="drop-area-{{id}}" class="drop-area">
+                <input type="file" class="ipt" />
+                <i class="fa fa-file-excel-o" aria-hidden="true"></i>
+                <span class="txt">drop your csv file here</span>
+            </div>
+            <div class="form">
+        
+                <div class="inputs">
+                    <div class="ipt">
+                        <label for="">Graph name</label>
+                        <input type="text" id="graph-name-{{id}}" onchange="saveForm('{{id}}')" />
+                    </div>
+                    <div class="ipt">
+                        <label for="">With header</label>
+                        <input type="checkbox" id="lbl-w-header-{{id}}" checked onchange="saveForm('{{id}}')" />
+                    </div>
+                    <div class="ipt">
+                        <label for="">With Tags</label>
+                        <input type="checkbox" id="lbl-w-tags-{{id}}" checked onchange="saveForm('{{id}}')" />
+                    </div>
+                    <h3>Labels</h3>
+                    <h4>Label X</h4>
+                    <div class="ipt">
+                        <label for="">Name</label>
+                        <input type="text" id="lbl-x-name-{{id}}" onchange="saveForm('{{id}}')" />
+                    </div>
+                    <div class="ipt">
+                        <label for="">Type</label>
+                        <select id="lbl-x-type-{{id}}" onchange="onChangeType('{{id}}', 'x', this.value)">
+                        </select>
+                    </div>
+                    <div class="ipt not-visible">
+                        <label for="">Format</label>
+                        <input type="text" id="lbl-x-format-{{id}}" onchange="saveForm('{{id}}')" />
+                    </div>
+                    <div class="ipt not-visible">
+                        <label for="">Unit</label>
+                        <select id="lbl-x-unit-{{id}}" onchange="saveForm('{{id}}')">
+                        </select>
+                    </div>
+                    <h4>Label Y</h4>
+                    <div class="ipt">
+                        <label for="">Name</label>
+                        <input type="text" id="lbl-y-name-{{id}}" onchange="saveForm('{{id}}')" />
+                    </div>
+                    <div class="ipt">
+                        <label for="">Type</label>
+                        <select id="lbl-y-type-{{id}}" onchange="onChangeType('{{id}}', 'y', this.value)">
+                        </select>
+                    </div>
+                    <div class="ipt not-visible">
+                        <label for="">Format</label>
+                        <input type="text" id="lbl-y-format-{{id}}" onchange="saveForm('{{id}}')" />
+                    </div>
+                    <div class="ipt not-visible">
+                        <label for="">Unit</label>
+                        <select id="lbl-y-unit-{{id}}" onchange="saveForm('{{id}}')">
+                        </select>
+                    </div>
+                </div>
+                <div class="btns">
+                    <button class="btn btn-secondary" onclick="clearForm('{{id}}')">Cancel</button>
+                    <button class="btn btn-primary" onclick="loadFile('{{id}}')">Load</button>
+                </div>
+            </div>
+        </div>
+        <div id="ga-{{id}}" class="graph-area not-visible">
+            <canvas id="myLineChart-{{id}}" width="400" height="200"></canvas>
+            <canvas id="layer-2-{{id}}" class="layer-2" width="1460" height="730"></canvas>
+            <div class="menus">
+                <div id="tags-box-{{id}}" class="tags-box">
+            
+                </div>
+                <div class="btns">
+                    <div class="tag-search">
+                        <input type="text" id="tag-name-{{id}}" />
+                        <button onclick="lineCharts['{{id}}'].setSelectedTagById('tag-name-{{id}}')">Set tag</button>
+                    </div>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="lineCharts['{{id}}'].chart.resetZoom()">Reset Zoom</button>
+                    <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="button" onclick="lineCharts['{{id}}'].toggleOption(OPTIONS_TYPE.ZOOM)">Toggle Zoom</button>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="confirmAction('Remove selected points?', () => lineCharts['{{id}}'].deleteSelectedChartData())">Delete Selected</button>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="lineCharts['{{id}}'].exportCSV()">Export</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <ul class="nav nav-tabs" id="myTab" role="tablist">
         <li class="nav-item" role="presentation">
           <button class="nav-link active" id="tab-0-tab" data-bs-toggle="tab" data-bs-target="#tab-0" type="button" role="tab" aria-controls="tab-0" aria-selected="true">tab-0</button>
@@ -24,115 +113,66 @@
       </ul>
       <div class="tab-content" id="myTabContent">
         <div class="tab-pane fade show active" id="tab-0" role="tabpanel" aria-labelledby="tab-0-tab">
-            <div id="graph-0" class="dialog">
-                <div id="drop-area-0" class="drop-area">
-                    <input type="file" class="ipt" />
-                    <i class="fa fa-file-excel-o" aria-hidden="true"></i>
-                    <span class="txt">drop your csv file here</span>
-                </div>
-                <div class="form">
-
-                    <div class="inputs">
-                        <div class="ipt">
-                            <label for="">Graph name</label>
-                            <input type="text" id="graph-name-0" onchange="saveForm(0)" />
-                        </div>
-                        <div class="ipt">
-                            <label for="">With header</label>
-                            <input type="checkbox" id="lbl-w-header-0" checked onchange="saveForm(0)" />
-                        </div>
-                        <h3>Labels</h3>
-                        <h4>Label X</h4>
-                        <div class="ipt">
-                            <label for="">Name</label>
-                            <input type="text" id="lbl-x-name-0" onchange="saveForm(0)" />
-                        </div>
-                        <div class="ipt">
-                            <label for="">Type</label>
-                            <select id="lbl-x-type-0" onchange="onChangeType(0, 'x', this.value)">
-                            </select>
-                        </div>
-                        <div class="ipt not-visible">
-                            <label for="">Format</label>
-                            <input type="text" id="lbl-x-format-0" onchange="saveForm(0)" />
-                        </div>
-                        <div class="ipt not-visible">
-                            <label for="">Unit</label>
-                            <select id="lbl-x-unit-0" onchange="saveForm(0)">
-                            </select>
-                        </div>
-                        <h4>Label Y</h4>
-                        <div class="ipt">
-                            <label for="">Name</label>
-                            <input type="text" id="lbl-y-name-0" onchange="saveForm(0)" />
-                        </div>
-                        <div class="ipt">
-                            <label for="">Type</label>
-                            <select id="lbl-y-type-0" onchange="onChangeType(0, 'y', this.value)">
-                            </select>
-                        </div>
-                        <div class="ipt not-visible">
-                            <label for="">Format</label>
-                            <input type="text" id="lbl-y-format-0" onchange="saveForm(0)" />
-                        </div>
-                        <div class="ipt not-visible">
-                            <label for="">Unit</label>
-                            <select id="lbl-y-unit-0" onchange="saveForm(0)">
-                            </select>
-                        </div>
-                    </div>
-                    <div class="btns">
-                        <button class="btn btn-secondary" onclick="clearForm(0)">Cancel</button>
-                        <button class="btn btn-primary" onclick="loadFile(0)">Load</button>
-                    </div>
-                </div>
-            </div>
-            <div id="ga-0" class="graph-area not-visible">
-                <canvas id="myLineChart-0" width="400" height="200"></canvas>
-                <canvas id="layer-2-0" class="layer-2" width="1460" height="730"></canvas>
-                <div class="btns">
-                    <button onclick="lineCharts[0].chart.resetZoom()">Reset Zoom</button>
-                    <button onclick="lineCharts[0].toggleOption(OPTIONS_TYPE.ZOOM)">Toggle Zoom</button>
-                    <button onclick="lineCharts[0].deleteSelectedChartData()">Delete Selected</button>
-                    <input type="text" id="tag-name-0" />
-                    <button onclick="lineCharts[0].setSelectedTagById('tag-name-0')">Set tag</button>
-                    <button onclick="lineCharts[0].exportCSV()">Export</button>
-                </div>
-                <div id="tags-box-0" class="tags-box">
-            
-                </div>
-            </div>
         </div>
         <div class="tab-pane fade new-tab" id="tab-1" role="tabpanel" aria-labelledby="tab-1-tab">
         </div>
-        <!-- <div class="tab-pane fade" id="contact" role="tabpanel" aria-labelledby="contact-tab">
-            ..d.
-        </div> -->
       </div>
     <script>
-        let chrts_opts = {};
-        let savers = {};
-        let lineCharts = {};
-        let currentTotalTabIdx = 0;
-        start(currentTotalTabIdx);
 
+        const TABS_CONFIG_SESSION_KEY = 'TABS_OPTS';
         const ulTabsElement = document.getElementById('myTab');
         const tabsContents = document.getElementById('myTabContent');
+        const graphTabTemplate = document.getElementById('tab-graph-template');
         var clickHandler = () => createNewTab();
 
+        let chrts_opts = {};
+        let savers = {
+            TABS_OPTS: new Saver(TABS_CONFIG_SESSION_KEY)
+        };
+        let lineCharts = {};
+        let currentTotalTabIdx = 0;
+        let existingtabs = savers[TABS_CONFIG_SESSION_KEY].load();
+        let extraTabs = existingtabs ? JSON.parse(existingtabs) : [];
+
+        document.getElementById('tab-0').innerHTML = graphTabTemplate.innerHTML.replaceAll('{{id}}', '0');
         document.querySelector('li.new-tab').children[0].addEventListener('click', clickHandler);
-        function createNewTab() {
+        
+        start(currentTotalTabIdx);
+        if (extraTabs.length > 0) {
+            for (let tbId of extraTabs)
+                createNewTab(tbId)
+        }
+
+        function confirmAction(message, action) {
+            var act = confirm(message);
+            if (act)
+                action();
+        } 
+
+        function createNewTab(forceNewId = undefined) {
             let newTab = document.querySelector('div.new-tab');
             let newTabTab = document.querySelector('.nav-item.new-tab');
-            var contentToClone = document.getElementById('tab-0');
-            var newContent = contentToClone.innerHTML;
-            let newId = currentTotalTabIdx + 1;
+            var newContent = graphTabTemplate.innerHTML;
+            let newId = forceNewId ?? currentTotalTabIdx + 1;
 
             // add new tab and link to new tab
             let divEle = newTab.cloneNode(true);
             let liEle = newTabTab.cloneNode(true);
-            liEle.innerHTML = liEle.innerHTML.replace(`-${newId}`, `-${newId + 1}`);
-            divEle.id = divEle.id.replace(`-${newId}`, `-${newId + 1}`);
+            let liBtnEle = liEle.querySelector('button');
+            let newTbBtn = newTabTab.querySelector('button');
+
+            newTbBtn.id = `tab-${newId}-tab`;
+            newTbBtn.setAttribute('data-bs-target', `#tab-${newId}`);
+            newTbBtn.setAttribute('aria-controls', `tab-${newId}`);
+            newTab.id = `tab-${newId}`;
+            newTab.setAttribute('aria-labelledby', `tab-${newId}-tab`);
+
+
+            liBtnEle.id = `tab-${newId + 1}-tab`;
+            liBtnEle.setAttribute('data-bs-target', `#tab-${newId + 1}`);
+            liBtnEle.setAttribute('aria-controls', `tab-${newId + 1}`);
+            divEle.id = `tab-${newId + 1}`;
+            divEle.setAttribute('aria-labelledby', `tab-${newId + 1}-tab`);
             liEle.children[0].addEventListener('click', clickHandler);
             liEle.children[0].classList.remove('active');
 
@@ -141,9 +181,7 @@
 
             // applying elements changes
             
-            newContent = newContent.replace(`-0`, `-${newId}`);
-            newContent = newContent.replace(`[0]`, `[${newId}]`);
-            newContent = newContent.replace(`(0)`, `(${newId})`);
+            newContent = newContent.replaceAll('{{id}}', newId);
 
             newTab.innerHTML = newContent;
             let removeBtn = document.createElement('span');
@@ -155,19 +193,32 @@
             newTabTab.children[0].innerText = 'tab-' + newId;
             newTab.classList.remove('new-tab');
             newTabTab.classList.remove('new-tab');
-            currentTotalTabIdx++;
+            start(newId);
+            if (!extraTabs.includes(newId))
+                extraTabs.push(newId);
+            currentTotalTabIdx = newId;
+
+            savers[TABS_CONFIG_SESSION_KEY].save(JSON.stringify(extraTabs));
         }
 
         function removeTab(id) {
             var btn = document.getElementById(`tab-${id}-tab`);
             var liEle = btn.parentElement;
             if (btn.classList.contains('active'))
+            {
                 document.getElementById(`tab-0-tab`).click();
+                var tab0Ele = document.getElementById(`tab-0`);
+                tab0Ele.classList.add('active');
+                tab0Ele.classList.add('show');
+            }
             
             liEle.remove();
 
             var tabContent = document.getElementById(`tab-${id}`);
             tabContent.remove();
+
+            extraTabs.splice(extraTabs.indexOf(id), 1);
+            savers[TABS_CONFIG_SESSION_KEY].save(JSON.stringify(extraTabs));
         }
 
         function start(id) {
@@ -183,6 +234,7 @@
             
             const SESSION_KEY = 'chart-opts-' + id;
             savers[id] = new Saver(SESSION_KEY);
+            savers[TABS_CONFIG_SESSION_KEY] = new Saver(TABS_CONFIG_SESSION_KEY);
             
             var data_opts = savers[id].load();
             if (data_opts) {
