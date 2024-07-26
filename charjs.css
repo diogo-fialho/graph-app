@@ -6,7 +6,7 @@ body {
     padding:0;
     margin: 0;
     overflow-x:hidden;
-    background-color: var(--color-4);
+    /* background-color: var(--color-4); */
     color: var(--color-1);
     --color-1: #eeeeee;
     --color-2: #b55400;
@@ -117,4 +117,26 @@ body {
 
 .drop-area input.ipt {
     display: none;
+}
+
+.nav-item  {
+    position: relative;
+}
+
+.nav-item:not(.new-tab) .nav-link {
+    padding-right: 32px;
+}
+
+.nav-item:not(.new-tab) .nav-link-btn.close {
+    position: absolute;
+    right: 12px;
+    top:.5rem;
+    padding: 5px;
+    font-size: 12px;
+    color: #495057;
+}
+
+.nav-item:not(.new-tab) .nav-link-btn.close:hover {
+    background-color: lightgray;
+    cursor: pointer;
 }
