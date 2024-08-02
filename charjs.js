@@ -11,6 +11,8 @@ const OPTIONS_TYPE = {
     ZOOM: 'zoom',
 }
 
+const TAG_COL = 'tags';
+
 // dataexample
 
 // data: {
@@ -32,6 +34,136 @@ const OPTIONS_TYPE = {
 //         showLine: true
 //     }]
 // }
+
+class DfLabelOptions {
+    constructor(type, name) {
+        this.type = type
+        this.name = name
+    }
+
+    formatInput(value) {
+        return value;
+    }
+
+    formatOutput(value) {
+        return value;
+    }
+    
+    static loadLabelOptions(header, example_value) {
+        // let date_format = DfDateLabelOptions.identifyFormat(example_value);
+        // if (date_format) {
+        //     // CONTINUE
+        //     let result = new DfDateLabelOptions(lbl_name, );
+
+        // }
+        switch (lbl_type) {
+            case LABEL_TYPE.date:
+                let result = new DfLabelOptions(lbl_type, lbl_name);
+
+                let format = document.getElementById(`lbl-${ele_base_id}-format-${id}`).value;
+                opts = {
+                    name: ele_base_id,
+                    type: lbl_type,
+                    unit: TIME_UNITS[document.getElementById(`lbl-${ele_base_id}-unit-${id}`).value],
+                    text: document.getElementById(`lbl-${ele_base_id}-name-${id}`).value,
+                    format: format,
+                };//dd-MM-yyyy HH:mm
+                break;
+            default:
+                opts = {
+                    name: ele_base_id,
+                    type: lbl_type,
+                    text: document.getElementById(`lbl-${ele_base_id}-name-${id}`).value,
+                    formatInput: (v) => isNaN(Number.parseFloat(v)) ? undefined : Number.parseFloat(v),
+                    getMin: (vals) => Math.min.apply(null,vals),
+                    getMax: (vals) => Math.max.apply(null,vals)
+                };
+
+        }
+        return opts;
+    }
+}
+class DfDateLabelOptions extends DfLabelOptions {
+    constructor(name, format) {
+        super(LABEL_TYPE.DATE, name)
+        this.format = format
+    }
+    // yyyy: inputDate.getFullYear(),
+    // MM: padZero(inputDate.getMonth() + 1),
+    // dd: padZero(inputDate.getDate()),
+    // HH: padZero(inputDate.getHours()),
+    // hh: padZero(inputDate.getHours() > 12 ? inputDate.getHours() - 12 : inputDate.getHours()),
+    // mm: padZero(inputDate.getMinutes()),
+    // ss: padZero(inputDate.getSeconds()),
+    // tt: inputDate.getHours() < 12 ? 'AM' : 'PM'
+
+    static identifyFormat(value) {
+        const seperators = ['-', '/', '.']
+        let formatss = []
+        for (let sep of seperators) {
+            formatss.push({ regex: /^\d{4}[-.\/]\d{1,2}[-.\/]\d{1,2}$/, formats: [ `yyyy${sep}MM${sep}dd`, `yyyy${sep}dd${sep}MM`] });
+            formatss.push({ regex: /^\d{1,2}[-.\/]\d{1,2}[-.\/]\d{4}$/, formats: [ `dd${sep}MM${sep}yyyy`, `MM${sep}dd${sep}yyyy`] });
+            formatss.push({ regex: /^\d{4}[-.\/]\d{1,2}[-.\/]\d{1,2}T\d{1,2}:\d{1,2}:\d{1,2}$/, formats: [ `yyyy${sep}MM${sep}ddTHH:mm:ss`, `yyyy${sep}dd${sep}MMTHH:mm:ss`] });
+            formatss.push({ regex: /^\d{1,2}[-.\/]\d{1,2}[-.\/]\d{4}T\d{1,2}:\d{1,2}:\d{1,2}$/, formats: [ `dd${sep}MM${sep}yyyyTHH:mm:ss`, `MM${sep}dd${sep}yyyyTHH:mm:ss`] });
+            formatss.push({ regex: /^\d{4}[-.\/]\d{1,2}[-.\/]\d{1,2} \d{1,2}:\d{1,2}:\d{1,2}$/, formats: [ `yyyy${sep}MM${sep}dd HH:mm:ss`, `yyyy${sep}dd${sep}MM HH:mm:ss`] });
+            formatss.push({ regex: /^\d{1,2}[-.\/]\d{1,2}[-.\/]\d{4} \d{1,2}:\d{1,2}:\d{1,2}$/, formats: [ `dd${sep}MM${sep}yyyy HH:mm:ss`, `MM${sep}dd${sep}yyyy HH:mm:ss`] });
+            formatss.push({ regex: /^\d{4}[-.\/]\d{1,2}[-.\/]\d{1,2} \d{1,2}:\d{1,2}$/, formats: [ `yyyy${sep}MM${sep}dd HH:mm`, `yyyy${sep}dd${sep}MM HH:mm`] });
+            formatss.push({ regex: /^\d{1,2}[-.\/]\d{1,2}[-.\/]\d{4} \d{1,2}:\d{1,2}$/, formats: [ `dd${sep}MM${sep}yyyy HH:mm`, `MM${sep}dd${sep}yyyy HH:mm`] });
+            formatss.push({ regex: /^\d{4}[-.\/]\d{1,2}[-.\/]\d{1,2} \d{1,2}$/, formats: [ `yyyy${sep}MM${sep}dd HH`, `yyyy${sep}dd${sep}MM HH`] });
+            formatss.push({ regex: /^\d{1,2}[-.\/]\d{1,2}[-.\/]\d{4} \d{1,2}$/, formats: [ `dd${sep}MM${sep}yyyy HH`, `MM${sep}dd${sep}yyyy HH`] });
+        }
+
+        for (const { regex, formats } of formatss) {
+            if (regex.test(value)) {
+                let v_f = []
+                for (let f of formats) {
+                    let date = stringToDate(value, f);
+                    if (date.getDate() !== NaN)
+                        v_f.push(f);
+                }
+                if (v_f.length > 0)
+                    return v_f;
+            }
+        }
+
+        return undefined;
+    }
+
+    formatInput(value) {
+        return formatDate(stringToDate(value.trim(), format), 'yyyy-MM-ddTHH:mm:ss.000Z')
+    }
+
+    formatOutput(value) {
+        return formatDate(new Date(v.trim()), format);
+    }
+
+    getMin(vals) {
+        return Math.min.apply(null,new Date(vals));
+    }
+
+    getMax(vals) {
+        return Math.max.apply(null,new Date(vals));
+    }
+}
+
+class DfNumberLabelOptions extends DfLabelOptions {
+    constructor(name) {
+        super(LABEL_TYPE.DATE, name)
+    }
+
+    formatInput(value) {
+        return isNaN(Number.parseFloat(v)) ? undefined : Number.parseFloat(v);
+    }
+
+    getMin(vals) {
+        return Math.min.apply(null, vals);
+    }
+
+    getMax(vals) {
+        return Math.max.apply(null, vals);
+    }
+}
+
 
 class DfChartOptions {
     X_OPTS_DEFAULT = { type: LABEL_TYPE.number, name: 'x' };
@@ -100,7 +232,7 @@ class DfChartOptions {
     fillFormLabelOptions(id, label_opts) {
         if (!label_opts) return;
 
-        document.getElementById(`lbl-${label_opts.name}-name-${id}`).value = label_opts.text ?? '';
+        document.getElementById(`lbl-${label_opts.name}-col-${id}`).value = label_opts.text ?? '';
         document.getElementById(`lbl-${label_opts.name}-type-${id}`).value = label_opts.type;
 
         switch (label_opts.type) {
@@ -121,7 +253,7 @@ class DfChartOptions {
                     name: ele_base_id,
                     type: lbl_type,
                     unit: TIME_UNITS[document.getElementById(`lbl-${ele_base_id}-unit-${id}`).value],
-                    text: document.getElementById(`lbl-${ele_base_id}-name-${id}`).value,
+                    text: document.getElementById(`lbl-${ele_base_id}-col-${id}`).value,
                     format: format,
                     formatInput: (v) => formatDate(stringToDate(v.trim(), format), 'yyyy-MM-ddTHH:mm:ss.000Z'),
                     formatOutput: (v) => formatDate(new Date(v.trim()), format),
@@ -133,7 +265,7 @@ class DfChartOptions {
                 opts = {
                     name: ele_base_id,
                     type: lbl_type,
-                    text: document.getElementById(`lbl-${ele_base_id}-name-${id}`).value,
+                    text: document.getElementById(`lbl-${ele_base_id}-col-${id}`).value,
                     formatInput: (v) => isNaN(Number.parseFloat(v)) ? undefined : Number.parseFloat(v),
                     getMin: (vals) => Math.min.apply(null,vals),
                     getMax: (vals) => Math.max.apply(null,vals)
@@ -284,15 +416,49 @@ class DfChart {
         this.ctx = ctx;
         this.tagsList = [];
         this.tags_ui_box = document.getElementById(`tags-box-${id}`);
-        this.last_datasets = undefined;
+        // this.last_datasets = undefined;
     }
 
-    load() {
+    load(data) {
+        // load data from columns selected, it should be the name/col
+        // this.options.x_options.text
+        // this.options.y_options.text
+        // tag
+        let dataset_data = []
+        let bg_colors = []
+        let bg_border_colors = []
+        for (let i = 0; i < data.header[this.options.x_options.text].data.length; i++) {
+            const x = data.header[this.options.x_options.text].data[i];
+            const y = data.header[this.options.y_options.text].data[i];
+            const tags = data.header[TAG_COL]?.data[i] !== undefined ? data.header[TAG_COL].data[i].split(',') : []; // this.options.w_tags
+            var val_x = this.options.x_options.formatInput(x);
+            var val_y = this.options.y_options.formatInput(y);
+            if (val_x == undefined || val_y == undefined)
+                continue;
+
+            dataset_data.push({
+                x: val_x,
+                y: val_y,
+                tags: tags
+            });
+            bg_colors.push(this.options.colors.pointBackgroundColor);
+            bg_border_colors.push(this.options.colors.pointBorderColor);
+        }
+        var dataset = {
+            label: this.options.text, // has to be dataset name
+            data: dataset_data,
+            backgroundColor: bg_colors,
+            borderColor: bg_border_colors,
+            borderWidth: 1,
+            showLine: true
+        }
         this.chart = new Chart(this.ctx, {
             type: 'line',
             // improve this
             plugins: this.PLUGINS,
-            data: this.last_datasets,
+            data: {
+                datasets: [dataset]
+            },
             options: {
                 // improve this
                 plugins: {
@@ -307,8 +473,8 @@ class DfChart {
         
         for (let dts of this.chart.data.datasets) {
             for (let dt of dts.data) {
-                if (dt.tag && this.tagsList.findIndex(t => t.text == dt.tag?.text) == -1)
-                    this.tagsList.push(dt.tag);
+                if (dt.tags && dt.tags.findIndex(t => t != '' && !this.tagsList.includes(t)) > -1)
+                    this.tagsList = this.tagsList.concat(dt.tags.filter(t => !this.tagsList.includes(t)));
             }
         }
 
@@ -326,13 +492,13 @@ class DfChart {
             var spanRemove = document.createElement('span');
             span.setAttribute('class', 'badge bg-secondary');
             // span.style.backgroundColor = tag.color;
-            span.innerText = tag.text;
+            span.innerText = tag;
             spanRemove.innerText = 'x';
             span.addEventListener('click', () => {
-                this.selectTag(tag.text);
+                this.selectTag(tag);
             });
             spanRemove.addEventListener('click', (e) => {
-                this.removeTag(tag.text);
+                this.removeTag(tag);
                 e.stopPropagation();
                 e.preventDefault();
             });
@@ -361,7 +527,7 @@ class DfChart {
     
     selectTag(tagName) {
         this.PLUGINS[0].lastSelected = this.chart.getDatasetMeta(0).data
-            .filter(p => p.$context.raw?.tag?.text == tagName);
+            .filter(p => p.$context.raw?.tags.includes(tagName));
 
         this.chart.render();
     }
@@ -372,16 +538,20 @@ class DfChart {
     }
 
     setSelectedTag(tagName) {
-        let tag = { text: tagName, color: getRandomColor() };
         this.chart.data.datasets[0].data = this.chart.getDatasetMeta(0).data
             .map(p => {
-                if (this.PLUGINS[0].currentSelected.find(p2 => p2.$context.dataIndex == p.$context.dataIndex) !== undefined)
-                    p.$context.raw.tag = tag;
+                if (this.PLUGINS[0].currentSelected.find(p2 => p2.$context.dataIndex == p.$context.dataIndex) !== undefined) {
+                    if (p.$context.raw.tags && !p.$context.raw.tags.includes(tagName)) {
+                        p.$context.raw.tags.push(tagName);
+                    }
+                    else if (!p.$context.raw.tags)
+                        p.$context.raw.tags = [tagName];
+                }
                 return p.$context.raw;
             });
 
-        if (this.tagsList.findIndex(t => t.text == tag?.text) == -1)
-            this.tagsList.push(tag);
+        if (this.tagsList.findIndex(t => t == tagName) == -1)
+            this.tagsList.push(tagName);
     
         this.updateTagBox();
         this.chart.update();
@@ -390,18 +560,19 @@ class DfChart {
     removeTag(tagName) {
         this.chart.data.datasets[0].data = this.chart.getDatasetMeta(0).data
             .map(p => {
-                if (p.$context.raw.tag?.text == tagName)
-                    delete p.$context.raw.tag;
+                if (p.$context.raw.tags?.includes(tagName))
+                    p.$context.raw.tags = p.$context.raw.tags.filter(t => t != tagName);
                 return p.$context.raw;
             });
-        this.tagsList = this.tagsList.filter(t => t.text != tagName);
+        this.tagsList = this.tagsList.filter(t => t != tagName);
         this.updateTagBox();
     }
 
     exportCSV() {
         let data = this.getData();
         if (data.length > 0) {
-            const headers = this.options.w_header ? [this.options.x_options.text, this.options.y_options.text, 'tag'].join(',') + '\r\n' : '';
+            // remove w_header, always export with header
+            const headers = this.options.w_header ? [this.options.x_options.text, this.options.y_options.text, TAG_COL].join(',') + '\r\n' : '';
             let rowsStr = "";
             for(let val of data) {
                 let x_val = val['x'];
@@ -412,14 +583,14 @@ class DfChart {
                 if (this.options.y_options.formatOutput !== undefined)
                     y_val = this.options.y_options.formatOutput(y_val);
                 
-                rowsStr += [x_val, y_val, val['tag']?.text ?? ''].join(',') + '\r\n';
+                rowsStr += [x_val, y_val, val[TAG_COL] ?? ''].join(',') + '\r\n';
             }
             
             download(headers + rowsStr);
         }
     }
 
-    readFile(file) {
+    static readFile(file, options, on_file_loaded) {
         var reader = new FileReader();
         let data = [];
         let bg_colors = [];
@@ -430,36 +601,75 @@ class DfChart {
             const separator = ';';
             let lines = evt.target.result.split('\r\n');
             let row = 0;
-            for (var line of lines) {
+            let result = { dataset_name: file.name, header: {} };
+            // read line of header if w_header ON
+            // read max 2 lines to get format and example value from file
+            // needs to load all values after if using for file
+            // later remove all values if needed when:
+            // - graph is loaded
+            // - a new file is loaded (here remove only the columns that won't be used)
+            // ...
+            let lines_to_read = options.w_header ? 2 : 1;
+            let headers = []
+            while (row < lines.length) {
+                var line = lines[row];
                 row++;
-                var points = line.split(',');
-                if (points.length > 1 && (!this.options.w_header || row > 1)) {
-                    var val_x = this.options.x_options.formatInput(points[0]);
-                    var val_y = this.options.y_options.formatInput(points[1]);
-                    if (val_x == undefined || val_y == undefined)
+                var values = line.split(',');
+                if (values.length > 0) {
+                    if (options.w_header && row == 1) {
+                        headers = values;
+                        for (let val of values) {
+                            result.header[val] = {
+                                type: undefined,
+                                data: []
+                            }
+                        }
                         continue;
+                    }
+                    
+                    for (let index = 0; index < headers.length; index++) {
+                        const header = headers[index];
+                        const value = values[index];
+                        if (result.header[header].type === undefined)
+                        {
+                            let format_date = DfDateLabelOptions.identifyFormat(value);
+                            if (format_date)
+                            {
+                                result.header[header].formats = format_date;
+                                result.header[header].type = LABEL_TYPE.date;
+                            }
+                            else
+                                result.header[header].type = LABEL_TYPE.number; 
+                        }
 
-                    data.push({
-                        x: val_x,
-                        y:  val_y,
-                        tag: this.options.w_tags ? points[2] && points[2] != '' ? { text: points[2], color: getRandomColor() } : undefined : undefined
-                    })
-                    bg_colors.push(this.options.colors.pointBackgroundColor);
-                    bg_border_colors.push(this.options.colors.pointBorderColor);
+                        result.header[header].data.push(value); 
+                    }
                 }
+
             }
+            on_file_loaded(options.id, result);
+                
+
+                
+                // var points = line.split(',');
+                // if (points.length > 1 && (!this.options.w_header || row > 1)) {
+                //     var val_x = this.options.x_options.formatInput(points[0]);
+                //     var val_y = this.options.y_options.formatInput(points[1]);
+                //     if (val_x == undefined || val_y == undefined)
+                //         continue;
+
+                //     data.push({
+                //         x: val_x,
+                //         y:  val_y,
+                //         tag: this.options.w_tags ? points[2] && points[2] != '' ? { text: points[2], color: getRandomColor() } : undefined : undefined
+                //     })
+                //     bg_colors.push(this.options.colors.pointBackgroundColor);
+                //     bg_border_colors.push(this.options.colors.pointBorderColor);
+                // }
+            // }
+
+            // LOAD ALL COLUMNS OF FILE
             
-            this.last_datasets = {
-                datasets: [{
-                    label: this.options.text,
-                    data: data,
-                    backgroundColor: bg_colors,
-                    borderColor: bg_border_colors,
-                    borderWidth: 1,
-                    showLine: true
-                }]
-            }
-            this.load();
         }
 
         reader.onerror = function (evt) {
@@ -469,8 +679,18 @@ class DfChart {
         return 
     }
 
+    removeDataset(pos) {
+        delete this.datasets[pos]
+    }
+
+
     toggleOption(type) {
         this.OPTIONS[type].callback();
+    }
+
+    readFormat(value) {
+        if (typeof date.getMonth === 'function')
+            return 
     }
 }
 
@@ -564,7 +784,7 @@ function stringToDate(inputStr, format)  {
     var date = new Date();
     const parts = {
         yyyy: (pos) => date.setYear(strNumOnly.slice(pos, pos + 4)),
-        MM: (pos) => date.setMonth(parseInt(strNumOnly.slice(pos, pos + 2)) - 1),
+        MM: (pos) => parseInt(strNumOnly.slice(pos, pos + 2)) - 1 < 13 ? date.setMonth(parseInt(strNumOnly.slice(pos, pos + 2)) - 1) : date.setMonth(undefined),
         dd: (pos) => date.setDate(strNumOnly.slice(pos, pos + 2)),
         HH: (pos) => date.setHours(strNumOnly.slice(pos, pos + 2)),
         // hh: (pos) => date.setMonth(strNumOnly.slice(pos, pos + 2)),
@@ -576,6 +796,8 @@ function stringToDate(inputStr, format)  {
 
     var currentPos = 0;
     format.replace(/yyyy|MM|dd|HH|hh|mm|ss|tt/g, function(a, b){
+        if (date.getDate() === NaN)
+            return NaN;
         var size = a.length;
         parts[a](currentPos);
         currentPos += size;
