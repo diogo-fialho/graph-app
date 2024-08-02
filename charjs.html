@@ -32,16 +32,16 @@
                         <label for="">With header</label>
                         <input type="checkbox" id="lbl-w-header-{{id}}" checked onchange="saveForm('{{id}}')" />
                     </div>
-                    <div class="ipt">
-                        <label for="">With Tags</label>
-                        <input type="checkbox" id="lbl-w-tags-{{id}}" checked onchange="saveForm('{{id}}')" />
-                    </div>
                     <h3>Labels</h3>
                     <h4>Label X</h4>
                     <div class="ipt">
                         <label for="">Column</label>
                         <select id="lbl-x-col-{{id}}" onchange="onChangeColumnName('{{id}}', 'x', this.value)">
                         </select>
+                    </div>
+                    <div class="ipt">
+                        <label for="">Example:</label>
+                        <div class="ex-value"><span class="badge bg-light text-dark" id="example-value-x-{{id}}"></span></div>
                     </div>
                     <div class="ipt">
                         <label for="">Type</label>
@@ -63,6 +63,10 @@
                         <label for="">Column</label>
                         <select id="lbl-y-col-{{id}}" onchange="onChangeColumnName('{{id}}', 'y', this.value)">
                         </select>
+                    </div>
+                    <div class="ipt">
+                        <label for="">Example:</label>
+                        <div class="ex-value"><span class="badge bg-light text-dark" id="example-value-y-{{id}}"></span></div>
                     </div>
                     <div class="ipt">
                         <label for="">Type</label>
@@ -357,7 +361,10 @@
                 loadFormats(id, k, data_loaded[id].header[value].formats);
             }
 
+            let valueToShow = data_loaded[id].header[value].data.filter(d => d !== undefined && d !== '')[0];
+
             document.getElementById(`lbl-${k}-type-${id}`).value = data_loaded[id].header[value].type;
+            document.getElementById(`example-value-${k}-${id}`).innerText = valueToShow;
             onChangeType(id, k, data_loaded[id].header[value].type);
         }
 

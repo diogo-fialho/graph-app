@@ -46,9 +46,15 @@ body {
 }
 
 .form .inputs input,
-.form .inputs select {
+.form .inputs select,
+.form .inputs div {
     flex: 8;
     height: 32px;
+}
+
+.form .inputs div.ex-value {
+    display: flex;
+    align-items: center;
 }
 
 .form .inputs input[type="checkbox"] {

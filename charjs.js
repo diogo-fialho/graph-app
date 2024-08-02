@@ -208,7 +208,7 @@ class DfChartOptions {
         this.x_options = this.loadLabelOptions(id, 'x');
         this.y_options = this.loadLabelOptions(id, 'y');
         this.w_header = document.getElementById(`lbl-w-header-${id}`).checked;
-        this.w_tags = document.getElementById(`lbl-w-tags-${id}`).checked;
+        // this.w_tags = document.getElementById(`lbl-w-tags-${id}`).checked;
     }
 
     returnForSave() {
@@ -224,7 +224,7 @@ class DfChartOptions {
     fillForm(id) {
         document.getElementById(`graph-name-${id}`).value = this.text ?? '';
         document.getElementById(`lbl-w-header-${id}`).checked = this.w_header;
-        document.getElementById(`lbl-w-tags-${id}`).checked = this.w_tags;
+        // document.getElementById(`lbl-w-tags-${id}`).checked = this.w_tags;
         this.fillFormLabelOptions(id, this.x_options);
         this.fillFormLabelOptions(id, this.y_options);
     }
