@@ -430,7 +430,7 @@ class DfChart {
         for (let i = 0; i < data.header[this.options.x_options.text].data.length; i++) {
             const x = data.header[this.options.x_options.text].data[i];
             const y = data.header[this.options.y_options.text].data[i];
-            const tags = data.header[TAG_COL]?.data[i] !== undefined ? data.header[TAG_COL].data[i].split(',') : []; // this.options.w_tags
+            const tags = data.header[TAG_COL]?.data[i] !== undefined ? data.header[TAG_COL].data[i].split(';') : []; // this.options.w_tags
             var val_x = this.options.x_options.formatInput(x);
             var val_y = this.options.y_options.formatInput(y);
             if (val_x == undefined || val_y == undefined)
@@ -583,7 +583,7 @@ class DfChart {
                 if (this.options.y_options.formatOutput !== undefined)
                     y_val = this.options.y_options.formatOutput(y_val);
                 
-                rowsStr += [x_val, y_val, val[TAG_COL] ?? ''].join(',') + '\r\n';
+                rowsStr += [x_val, y_val, val[TAG_COL]?.join(';') ?? ''].join(',') + '\r\n';
             }
             
             download(headers + rowsStr);
