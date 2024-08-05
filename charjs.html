@@ -21,72 +21,134 @@
                 <i class="fa fa-file-excel-o" aria-hidden="true"></i>
                 <span class="txt">drop your csv file here</span>
             </div>
-            <div class="form">
-        
-                <div class="inputs">
-                    <div class="ipt">
-                        <label for="">Dataset name</label>
-                        <input type="text" id="graph-name-{{id}}" onchange="saveForm('{{id}}')" />
-                    </div>
-                    <div class="ipt">
-                        <label for="">With header</label>
-                        <input type="checkbox" id="lbl-w-header-{{id}}" checked onchange="saveForm('{{id}}')" />
-                    </div>
-                    <h3>Labels</h3>
-                    <h4>Label X</h4>
-                    <div class="ipt">
-                        <label for="">Column</label>
-                        <select id="lbl-x-col-{{id}}" onchange="onChangeColumnName('{{id}}', 'x', this.value)">
-                        </select>
-                    </div>
-                    <div class="ipt">
-                        <label for="">Example:</label>
-                        <div class="ex-value"><span class="badge bg-light text-dark" id="example-value-x-{{id}}"></span></div>
-                    </div>
-                    <div class="ipt">
-                        <label for="">Type</label>
-                        <select id="lbl-x-type-{{id}}" onchange="onChangeType('{{id}}', 'x', this.value)">
-                        </select>
-                    </div>
-                    <div class="ipt not-visible">
-                        <label for="">Format</label>
-                        <select id="lbl-x-format-{{id}}">
-                        </select>
-                    </div>
-                    <div class="ipt not-visible">
-                        <label for="">Unit</label>
-                        <select id="lbl-x-unit-{{id}}" onchange="saveForm('{{id}}')">
-                        </select>
-                    </div>
-                    <h4>Label Y</h4>
-                    <div class="ipt">
-                        <label for="">Column</label>
-                        <select id="lbl-y-col-{{id}}" onchange="onChangeColumnName('{{id}}', 'y', this.value)">
-                        </select>
-                    </div>
-                    <div class="ipt">
-                        <label for="">Example:</label>
-                        <div class="ex-value"><span class="badge bg-light text-dark" id="example-value-y-{{id}}"></span></div>
-                    </div>
-                    <div class="ipt">
-                        <label for="">Type</label>
-                        <select id="lbl-y-type-{{id}}" onchange="onChangeType('{{id}}', 'y', this.value)">
-                        </select>
-                    </div>
-                    <div class="ipt not-visible">
-                        <label for="">Format</label>
-                        <select id="lbl-y-format-{{id}}">
-                        </select>
-                    </div>
-                    <div class="ipt not-visible">
-                        <label for="">Unit</label>
-                        <select id="lbl-y-unit-{{id}}" onchange="saveForm('{{id}}')">
-                        </select>
-                    </div>
-                </div>
-                <div class="btns">
-                    <button class="btn btn-secondary" onclick="clearForm('{{id}}')">Cancel</button>
+            <div class="data-info">
+                <div class="table-data">
                     <button class="btn btn-primary" onclick="loadGraph('{{id}}')">Load</button>
+                    <table class="table table-striped">
+                        <thead>
+                          <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Name</th>
+                            <th scope="col">X Label</th>
+                            <th scope="col">Y Label</th>
+                            <th scope="col"></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <th scope="row">1</th>
+                            <td>Testes 1</td>
+                            <td>Label x</td>
+                            <td>Label y</td>
+                            <td><button class="btn btn-danger btn-sm" onclick="removeOptions('{{id}}')">Remove</button></td>
+                          </tr>
+                          <tr>
+                            <th scope="row">2</th>
+                            <td>Testes 1</td>
+                            <td>Label x</td>
+                            <td>Label y</td>
+                            <td><button class="btn btn-danger btn-sm" onclick="removeOptions('{{id}}')">Remove</button></td>
+                          </tr>
+                          <tr>
+                            <th scope="row">3</th>
+                            <td>Testes 1</td>
+                            <td>Label x</td>
+                            <td>Label y</td>
+                            <td><button class="btn btn-danger btn-sm" onclick="removeOptions('{{id}}')">Remove</button></td>
+                          </tr>
+                          <tr>
+                            <th scope="row">4</th>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                          </tr>
+                          <tr>
+                            <th scope="row">5</th>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                          </tr>
+                        </tbody>
+                      </table>
+                </div>
+                <hr>
+                <div class="form">
+        
+                    <div class="inputs">
+                        <div class="ipt">
+                            <label for="">Dataset name</label>
+                            <input type="text" id="graph-name-{{id}}" onchange="saveForm('{{id}}')" />
+                        </div>
+                        <div class="ipt">
+                            <label for="">With header</label>
+                            <input type="checkbox" id="lbl-w-header-{{id}}" checked onchange="saveForm('{{id}}')" />
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="group-ipt col-6">
+                                <h4>Label X</h4>
+                                <div class="ipt">
+                                    <label for="">Column</label>
+                                    <select id="lbl-x-col-{{id}}" onchange="onChangeColumnName('{{id}}', 'x', this.value)">
+                                    </select>
+                                </div>
+                                <div class="ipt">
+                                    <label for="">Example:</label>
+                                    <div class="ipt-div ex-value"><span class="badge bg-light text-dark" id="example-value-x-{{id}}"></span></div>
+                                </div>
+                                <div class="ipt">
+                                    <label for="">Type</label>
+                                    <select id="lbl-x-type-{{id}}" onchange="onChangeType('{{id}}', 'x', this.value)">
+                                    </select>
+                                </div>
+                                <div class="ipt not-visible">
+                                    <label for="">Format</label>
+                                    <select id="lbl-x-format-{{id}}">
+                                    </select>
+                                </div>
+                                <div class="ipt not-visible">
+                                    <label for="">Unit</label>
+                                    <select id="lbl-x-unit-{{id}}" onchange="saveForm('{{id}}')">
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="group-ipt col-6">
+                                <h4>Label Y</h4>
+                                <div class="ipt">
+                                    <label for="">Column</label>
+                                    <select id="lbl-y-col-{{id}}" onchange="onChangeColumnName('{{id}}', 'y', this.value)">
+                                    </select>
+                                </div>
+                                <div class="ipt">
+                                    <label for="">Example:</label>
+                                    <div class="ex-value ipt-div"><span class="badge bg-light text-dark" id="example-value-y-{{id}}"></span></div>
+                                </div>
+                                <div class="ipt">
+                                    <label for="">Type</label>
+                                    <select id="lbl-y-type-{{id}}" onchange="onChangeType('{{id}}', 'y', this.value)">
+                                    </select>
+                                </div>
+                                <div class="ipt not-visible">
+                                    <label for="">Format</label>
+                                    <select id="lbl-y-format-{{id}}">
+                                    </select>
+                                </div>
+                                <div class="ipt not-visible">
+                                    <label for="">Unit</label>
+                                    <select id="lbl-y-unit-{{id}}" onchange="saveForm('{{id}}')">
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        
+                    </div>
+                    <div class="btns">
+                        <button class="btn btn-secondary" onclick="clearForm('{{id}}')">Cancel</button>
+                        <button class="btn btn-primary" onclick="addLabels('{{id}}')">Add</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -333,6 +395,14 @@
                 ele_y.appendChild(option.cloneNode(true));
             }
             
+        }
+
+        function addLabels(id) {
+            let fileInput = document.querySelector(`#drop-area-${id} .ipt`);
+            if (fileInput.files.length > 0) {
+                var lbl_type = LABEL_TYPE[document.getElementById(`lbl-x-type-${id}`).value];
+                chrts_opts[id].loadFromForm(id);
+            }
         }
 
         function loadGraph(id) {

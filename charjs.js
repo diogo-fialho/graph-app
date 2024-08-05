@@ -4,7 +4,12 @@ const LABEL_TYPE = {
 }
 
 const TIME_UNITS = {
-    hour: 'hour'
+    hour: 'hour',
+    day: 'day',
+    week: 'week',
+    month: 'month',
+    quarter: 'quarter',
+    year: 'year'
 }
 
 const OPTIONS_TYPE = {
@@ -427,6 +432,7 @@ class DfChart {
         let dataset_data = []
         let bg_colors = []
         let bg_border_colors = []
+        let color = getRandomColor();
         for (let i = 0; i < data.header[this.options.x_options.text].data.length; i++) {
             const x = data.header[this.options.x_options.text].data[i];
             const y = data.header[this.options.y_options.text].data[i];
@@ -441,11 +447,19 @@ class DfChart {
                 y: val_y,
                 tags: tags
             });
-            bg_colors.push(this.options.colors.pointBackgroundColor);
-            bg_border_colors.push(this.options.colors.pointBorderColor);
+            bg_colors.push(color);
+            bg_border_colors.push(color);
         }
         var dataset = {
             label: this.options.text, // has to be dataset name
+            data: dataset_data,
+            backgroundColor: bg_colors,
+            borderColor: bg_border_colors,
+            borderWidth: 1,
+            showLine: true
+        }
+        var dataset2 = {
+            label: this.options.text + 'testes', // has to be dataset name
             data: dataset_data,
             backgroundColor: bg_colors,
             borderColor: bg_border_colors,
@@ -457,7 +471,7 @@ class DfChart {
             // improve this
             plugins: this.PLUGINS,
             data: {
-                datasets: [dataset]
+                datasets: [dataset, dataset2]
             },
             options: {
                 // improve this
@@ -686,11 +700,6 @@ class DfChart {
 
     toggleOption(type) {
         this.OPTIONS[type].callback();
-    }
-
-    readFormat(value) {
-        if (typeof date.getMonth === 'function')
-            return 
     }
 }
 

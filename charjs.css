@@ -19,15 +19,16 @@ body {
 .not-visible {
     display: none !important;
 }
-
+.tab-pane {
+    padding: 50px;
+}
 .dialog {
     display: flex;
 }
 
 .form {
-    width: 60%;
-    padding: 50px;
-    padding-right: 400px;
+    padding: 20px;
+    width: 1000px;
 }
 
 .form .inputs {
@@ -47,7 +48,7 @@ body {
 
 .form .inputs input,
 .form .inputs select,
-.form .inputs div {
+.form .inputs .ipt-div {
     flex: 8;
     height: 32px;
 }
@@ -59,6 +60,15 @@ body {
 
 .form .inputs input[type="checkbox"] {
     height: 24px;
+}
+
+.table-data {
+    min-width: 700px;
+}
+
+table td,
+table th {
+    vertical-align: middle;
 }
 
 .graph-area {
