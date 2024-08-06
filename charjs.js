@@ -561,7 +561,7 @@ class DfChart {
     deleteSelectedChartData() {
         for (let i = 0; i < this.chart.data.datasets.length; i++) {
             this.chart.data.datasets[i].data = this.chart.getDatasetMeta(i).data
-                .filter(p => this.PLUGINS[0].currentSelected[i].find(p2 => p2.$context.dataIndex == p.$context.dataIndex) === undefined)
+                .filter(p => this.PLUGINS[0].currentSelected[i.toString()]?.find(p2 => p2.$context.dataIndex == p.$context.dataIndex) === undefined)
                 .map(p => p.$context.raw);
 
         }
@@ -588,7 +588,7 @@ class DfChart {
         for (let i = 0; i < this.chart.data.datasets.length; i++) {
             this.chart.data.datasets[i].data = this.chart.getDatasetMeta(i).data
                 .map(p => {
-                    if (this.PLUGINS[0].currentSelected[i].find(p2 => p2.$context.dataIndex == p.$context.dataIndex) !== undefined) {
+                    if (this.PLUGINS[0].currentSelected[i.toString()]?.find(p2 => p2.$context.dataIndex == p.$context.dataIndex) !== undefined) {
                         if (p.$context.raw.tags && !p.$context.raw.tags.includes(tagName)) {
                             p.$context.raw.tags.push(tagName);
                         }

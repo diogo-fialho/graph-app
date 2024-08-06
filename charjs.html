@@ -25,7 +25,7 @@
             <div class="data-info">
                 <div class="table-data">
                     <button class="btn btn-primary" onclick="loadGraph('{{id}}')">Load</button>
-                    <table class="table table-striped">
+                    <table id="table-ct-{{id}}" class="table table-striped">
                         <thead>
                           <tr>
                             <th scope="col">#</th>
@@ -36,41 +36,6 @@
                           </tr>
                         </thead>
                         <tbody>
-                          <tr>
-                            <th scope="row">1</th>
-                            <td>Testes 1</td>
-                            <td>Label x</td>
-                            <td>Label y</td>
-                            <td><button class="btn btn-danger btn-sm" onclick="removeOptions('{{id}}')">Remove</button></td>
-                          </tr>
-                          <tr>
-                            <th scope="row">2</th>
-                            <td>Testes 1</td>
-                            <td>Label x</td>
-                            <td>Label y</td>
-                            <td><button class="btn btn-danger btn-sm" onclick="removeOptions('{{id}}')">Remove</button></td>
-                          </tr>
-                          <tr>
-                            <th scope="row">3</th>
-                            <td>Testes 1</td>
-                            <td>Label x</td>
-                            <td>Label y</td>
-                            <td><button class="btn btn-danger btn-sm" onclick="removeOptions('{{id}}')">Remove</button></td>
-                          </tr>
-                          <tr>
-                            <th scope="row">4</th>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                          </tr>
-                          <tr>
-                            <th scope="row">5</th>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                          </tr>
                         </tbody>
                       </table>
                 </div>
@@ -335,6 +300,47 @@
             savers[id].save(JSON.stringify(chrts_opts[id].returnForSave()));
         }
 
+        function removeOptions(id, key) {
+            delete chrts_opts[id][key];
+            loadTable(id);
+        }
+
+        function loadTable(id) {
+            let table_ele = document.querySelector(`#table-ct-${id} tbody`);
+            table_ele.innerHTML = '';
+            let keys = Object.keys(chrts_opts[id]);
+            let row = 1;
+            for (let key of keys) {
+                let opts = chrts_opts[id][key];
+                let tr_ele = document.createElement('tr');
+                let td_num = document.createElement('th');
+                td_num.innerText = row;
+                tr_ele.appendChild(td_num);
+
+                createTdElement(tr_ele, opts.text);
+                createTdElement(tr_ele, opts.x_options.text);
+                createTdElement(tr_ele, opts.y_options.text);
+                let btn_td_ele = createTdElement(tr_ele, '');
+                let btn_ele = document.createElement('button');
+                btn_ele.setAttribute('class', 'btn btn-danger btn-sm');
+                btn_ele.innerText = 'Remove';
+                btn_ele.addEventListener('click', () => removeOptions(id, key));
+                btn_td_ele.appendChild(btn_ele);
+
+
+                table_ele.appendChild(tr_ele);
+                row++;
+            }
+
+
+            function createTdElement(tr_ele, value) {
+                let td_ele = document.createElement('td');
+                td_ele.innerHTML = value;
+                tr_ele.appendChild(td_ele);
+                return td_ele;
+            }
+        }
+
         function loadLabelTypes(id) {
             var ele_x = document.getElementById(`lbl-x-type-${id}`);
             var ele_y = document.getElementById(`lbl-y-type-${id}`);
@@ -406,6 +412,7 @@
                 var opts = new DfChartOptions('tmp-'+ id);
                 opts.loadFromForm(id);
                 chrts_opts[id].push(opts);
+                loadTable(id);
                 clearForm(id);
             }
         }

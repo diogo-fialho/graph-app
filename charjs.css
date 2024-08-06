@@ -20,7 +20,7 @@ body {
     display: none !important;
 }
 .tab-pane {
-    padding: 50px;
+    /* padding: 50px; */
 }
 .dialog {
     display: flex;
@@ -64,6 +64,7 @@ body {
 
 .table-data {
     min-width: 700px;
+    min-height: 300px;
 }
 
 table td,
