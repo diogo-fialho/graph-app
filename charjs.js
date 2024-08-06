@@ -303,16 +303,34 @@ class DfBoxSelectPlugin {
         this.activeMouse = false;
         this.startCoord = undefined;
         this.lastCoord = undefined;
-        this.currentSelected = undefined;
-        this.lastSelected = undefined;
+        this.currentSelected = {};
+        this.lastSelected = {};
     }
 
     beforeEvent(chart, args, pluginOptions) {
         const event = args.event;
         if (!this.activeMouse && event.type == 'mousedown') {
-            let canvas_client_rect = this.ctx.canvas.getBoundingClientRect();
-            this.startCoord = [event.native.clientX - canvas_client_rect.left, event.native.clientY - canvas_client_rect.top, event.x, event.y];
-            this.activeMouse = true
+            let points_in_evt = chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true);
+
+            // no points touched, start select box
+            if (points_in_evt.length == 0) {
+                let canvas_client_rect = this.ctx.canvas.getBoundingClientRect();
+                this.startCoord = [event.native.clientX - canvas_client_rect.left, event.native.clientY - canvas_client_rect.top, event.x, event.y];
+                this.activeMouse = true
+            }
+            else {
+                let idx = points_in_evt[0].datasetIndex.toString();
+                if (!this.currentSelected[idx]) {
+                    this.currentSelected[idx] = []
+                }
+                
+                let existing_idx = this.currentSelected[idx].findIndex(v => v.$context.dataIndex == points_in_evt[0].index);
+                if (existing_idx == -1)
+                    this.currentSelected[idx].push(points_in_evt[0].element);
+                else
+                    this.currentSelected[idx].splice(existing_idx, 1);
+
+            }
         }
         else if (this.activeMouse && event.type == 'mousemove') {
             let canvas_client_rect = this.ctx.canvas.getBoundingClientRect();
@@ -335,12 +353,13 @@ class DfBoxSelectPlugin {
                 let data_se = [];
                 for (let i = 0; i < chart.data.datasets.length; i++) {
                     var c_dataset = chart.getDatasetMeta(i);
-                    data_se.push(c_dataset.data.filter(p =>
+                    data_se[i.toString()] = c_dataset.data.filter(p =>
                         // atention, only works with circle for now, possibly
                         p.x <= this.lastCoord[2] + p.options.radius && p.x >= this.startCoord[2] - p.options.radius &&
                         p.y <= this.lastCoord[3] + p.options.radius && p.y >= this.startCoord[3] - p.options.radius
-                    ));
+                    );
                 }
+                
                 this.lastSelected = data_se;
             }
                 
@@ -356,20 +375,24 @@ class DfBoxSelectPlugin {
 
         canvas_secondary.width = chart_canvas.style.width.replace('px', '');
         canvas_secondary.height = chart_canvas.style.height.replace('px', '');
-        if (this.lastSelected) {
-            if (this.currentSelected)
-                for (let points of this.currentSelected) {
+        if (Object.keys(this.lastSelected).length > 0) {
+            let curr_selected_keys = Object.keys(this.currentSelected);
+            if (curr_selected_keys.length > 0)
+                for (let key of curr_selected_keys) {
+                    let points = this.currentSelected[key];
                     for (let point of points) {
                         point.options.backgroundColor = this.options.colors.pointBackgroundColor;   
                         point.options.borderColor = this.options.colors.pointBorderColor;   
                     }
                 }
             this.currentSelected = this.lastSelected;
-            this.lastSelected = undefined;
+            this.lastSelected = {};
         }
 
-        if (this.currentSelected)    
-            for (let points of this.currentSelected) {
+        let curr_select_keys = Object.keys(this.currentSelected);
+        if (curr_select_keys.length > 0)    
+            for (let key of curr_select_keys) {
+                let points = this.currentSelected[key];
                 for (let point of points) {
                     point.options.backgroundColor = this.options.colors.pointSelectedBackgroundColor;   
                     point.options.borderColor = this.options.colors.pointSelectedBorderColor;   
@@ -541,8 +564,8 @@ class DfChart {
                 .filter(p => this.PLUGINS[0].currentSelected[i].find(p2 => p2.$context.dataIndex == p.$context.dataIndex) === undefined)
                 .map(p => p.$context.raw);
 
-            this.PLUGINS[0].currentSelected = [];
         }
+        this.PLUGINS[0].currentSelected = {};
         this.chart.update();
     }    
     
@@ -565,7 +588,7 @@ class DfChart {
         for (let i = 0; i < this.chart.data.datasets.length; i++) {
             this.chart.data.datasets[i].data = this.chart.getDatasetMeta(i).data
                 .map(p => {
-                    if (this.PLUGINS[i].currentSelected[i].find(p2 => p2.$context.dataIndex == p.$context.dataIndex) !== undefined) {
+                    if (this.PLUGINS[0].currentSelected[i].find(p2 => p2.$context.dataIndex == p.$context.dataIndex) !== undefined) {
                         if (p.$context.raw.tags && !p.$context.raw.tags.includes(tagName)) {
                             p.$context.raw.tags.push(tagName);
                         }
