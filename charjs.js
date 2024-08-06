@@ -282,26 +282,31 @@ class DfChartOptions {
 
     loadScalesOptions(optsVariable) {
         var result = {
+            display: true,
             title: {
                 display: optsVariable.text_display ?? true,
                 text: optsVariable.text
             }
         }
-        
-        if (optsVariable.type == LABEL_TYPE.date) {
+
+        if (optsVariable.type == LABEL_TYPE.number) {
+            result.type = 'linear';
+        }
+        else if (optsVariable.type == LABEL_TYPE.date) {
             var timeOpts = {
                 unit: optsVariable.unit,
                 displayFormats: {}
             }
             timeOpts.displayFormats[optsVariable.unit] = optsVariable.format;
             result = {
+                display: result.display,
                 type: 'time',
                 time: timeOpts,
                 title: result.title
             }
         }
 
-        return result
+        return result;
     }
 }
 
