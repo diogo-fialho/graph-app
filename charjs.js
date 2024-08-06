@@ -178,26 +178,14 @@ class DfChartOptions {
         x_options = this.X_OPTS_DEFAULT,
         y_options = this.Y_OPTS_DEFAULT,
         w_header = false,
-        w_tags = false) {
+        file_id = undefined,
+        colors = {}) {
         this.text = text;
         this.x_options = x_options;
         this.y_options = y_options;
         this.w_header = w_header;
-        this.w_tags = w_tags;
-        this.colors = {
-            pointBackgroundColor: 'rgba(75, 192, 192, 0.2)',
-            pointSelectedBackgroundColor: 'red',
-            pointBorderColor: 'rgba(75, 192, 192, 1)',
-            pointSelectedBorderColor: 'red',
-        };
-    }
-
-    clear() {
-        this.text = '';
-        this.x_options = this.X_OPTS_DEFAULT;
-        this.y_options = this.Y_OPTS_DEFAULT;
-        this.w_header = false;
-        this.w_tags = false;
+        this.file_id = file_id;
+        this.colors = colors;
     }
     
     loadFromSave(saveData) {
@@ -205,7 +193,6 @@ class DfChartOptions {
         this.x_options = saveData.x_options;
         this.y_options = saveData.y_options;
         this.w_header = saveData.w_header;
-        this.w_tags = saveData.w_tags;
     }
 
     loadFromForm(id) {
@@ -213,7 +200,7 @@ class DfChartOptions {
         this.x_options = this.loadLabelOptions(id, 'x');
         this.y_options = this.loadLabelOptions(id, 'y');
         this.w_header = document.getElementById(`lbl-w-header-${id}`).checked;
-        // this.w_tags = document.getElementById(`lbl-w-tags-${id}`).checked;
+        this.file_id = document.querySelector(`#drop-area-${id} .file-id`).value;
     }
 
     returnForSave() {
@@ -222,14 +209,13 @@ class DfChartOptions {
             x_options: this.x_options,
             y_options: this.y_options,
             w_header: this.w_header,
-            w_tags: this.w_tags,
         }
     }
 
     fillForm(id) {
         document.getElementById(`graph-name-${id}`).value = this.text ?? '';
         document.getElementById(`lbl-w-header-${id}`).checked = this.w_header;
-        // document.getElementById(`lbl-w-tags-${id}`).checked = this.w_tags;
+        document.querySelector(`#drop-area-${id} .file-id`).value = this.file_id;
         this.fillFormLabelOptions(id, this.x_options);
         this.fillFormLabelOptions(id, this.y_options);
     }
@@ -346,12 +332,16 @@ class DfBoxSelectPlugin {
             this.activeMouse = false;
             this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
             if (this.lastCoord) {
-                var c_dataset = chart.getDatasetMeta(0);
-                this.lastSelected = c_dataset.data.filter(p =>
-                    // atention, only works with circle for now, possibly
-                    p.x <= this.lastCoord[2] + p.options.radius && p.x >= this.startCoord[2] - p.options.radius &&
-                    p.y <= this.lastCoord[3] + p.options.radius && p.y >= this.startCoord[3] - p.options.radius
-                );
+                let data_se = [];
+                for (let i = 0; i < chart.data.datasets.length; i++) {
+                    var c_dataset = chart.getDatasetMeta(i);
+                    data_se.push(c_dataset.data.filter(p =>
+                        // atention, only works with circle for now, possibly
+                        p.x <= this.lastCoord[2] + p.options.radius && p.x >= this.startCoord[2] - p.options.radius &&
+                        p.y <= this.lastCoord[3] + p.options.radius && p.y >= this.startCoord[3] - p.options.radius
+                    ));
+                }
+                this.lastSelected = data_se;
             }
                 
             this.startCoord = undefined;
@@ -368,18 +358,22 @@ class DfBoxSelectPlugin {
         canvas_secondary.height = chart_canvas.style.height.replace('px', '');
         if (this.lastSelected) {
             if (this.currentSelected)
-                for (let point of this.currentSelected) {
-                    point.options.backgroundColor = this.options.colors.pointBackgroundColor;   
-                    point.options.borderColor = this.options.colors.pointBorderColor;   
+                for (let points of this.currentSelected) {
+                    for (let point of points) {
+                        point.options.backgroundColor = this.options.colors.pointBackgroundColor;   
+                        point.options.borderColor = this.options.colors.pointBorderColor;   
+                    }
                 }
             this.currentSelected = this.lastSelected;
             this.lastSelected = undefined;
         }
 
-        if (this.currentSelected)        
-            for (let point of this.currentSelected) {
-                point.options.backgroundColor = this.options.colors.pointSelectedBackgroundColor;   
-                point.options.borderColor = this.options.colors.pointSelectedBorderColor;   
+        if (this.currentSelected)    
+            for (let points of this.currentSelected) {
+                for (let point of points) {
+                    point.options.backgroundColor = this.options.colors.pointSelectedBackgroundColor;   
+                    point.options.borderColor = this.options.colors.pointSelectedBorderColor;   
+                }
             }
     }
 }
@@ -416,11 +410,20 @@ class DfChart {
 
     PLUGINS = []
 
-    constructor(id, ctx, options = new DfChartOptions()) {
+    constructor(id, ctx, options_list = []) {
+        this.colors = {
+            pointBackgroundColor: 'rgba(75, 192, 192, 0.2)',
+            pointSelectedBackgroundColor: 'red',
+            pointBorderColor: 'rgba(75, 192, 192, 1)',
+            pointSelectedBorderColor: 'red',
+        };
         this.id = id;
-        this.options = options;
+        this.options_list = options_list.map(opt => {
+            opt.colors = this.colors;
+            return opt;
+        });
         this.PLUGINS = [
-            new DfBoxSelectPlugin({ graphId: id, colors: options.colors })
+            new DfBoxSelectPlugin({ graphId: id, colors: this.colors })
         ]
         this.zoom_plugin = new DfZoomPlugin();
         this.ctx = ctx;
@@ -429,54 +432,51 @@ class DfChart {
         // this.last_datasets = undefined;
     }
 
-    load(data) {
+    load(data_loaded) {
         // load data from columns selected, it should be the name/col
         // this.options.x_options.text
         // this.options.y_options.text
         // tag
-        let dataset_data = []
-        let bg_colors = []
-        let bg_border_colors = []
-        let color = getRandomColor();
-        for (let i = 0; i < data.header[this.options.x_options.text].data.length; i++) {
-            const x = data.header[this.options.x_options.text].data[i];
-            const y = data.header[this.options.y_options.text].data[i];
-            const tags = data.header[TAG_COL]?.data[i] !== undefined ? data.header[TAG_COL].data[i].split(';') : []; // this.options.w_tags
-            var val_x = this.options.x_options.formatInput(x);
-            var val_y = this.options.y_options.formatInput(y);
-            if (val_x == undefined || val_y == undefined)
-                continue;
-
-            dataset_data.push({
-                x: val_x,
-                y: val_y,
-                tags: tags
+        let datasets = []
+        for (let options of this.options_list) {
+            let dataset_data = []
+            let bg_colors = []
+            let bg_border_colors = []
+            let color = getRandomColor();
+            let data = data_loaded.find(v => v.id == options.file_id).data;
+            for (let i = 0; i < data.header[options.x_options.text].data.length; i++) {
+                const x = data.header[options.x_options.text].data[i];
+                const y = data.header[options.y_options.text].data[i];
+                const tags = data.header[TAG_COL]?.data[i] !== undefined ? data.header[TAG_COL].data[i].split(';') : []; // options.w_tags
+                var val_x = options.x_options.formatInput(x);
+                var val_y = options.y_options.formatInput(y);
+                if (val_x == undefined || val_y == undefined)
+                    continue;
+    
+                dataset_data.push({
+                    x: val_x,
+                    y: val_y,
+                    tags: tags
+                });
+                bg_colors.push(color);
+                bg_border_colors.push(color);
+            }
+            datasets.push({
+                label: options.text, // has to be dataset name
+                data: dataset_data,
+                backgroundColor: bg_colors,
+                borderColor: bg_border_colors,
+                borderWidth: 1,
+                showLine: true
             });
-            bg_colors.push(color);
-            bg_border_colors.push(color);
         }
-        var dataset = {
-            label: this.options.text, // has to be dataset name
-            data: dataset_data,
-            backgroundColor: bg_colors,
-            borderColor: bg_border_colors,
-            borderWidth: 1,
-            showLine: true
-        }
-        var dataset2 = {
-            label: this.options.text + 'testes', // has to be dataset name
-            data: dataset_data,
-            backgroundColor: bg_colors,
-            borderColor: bg_border_colors,
-            borderWidth: 1,
-            showLine: true
-        }
+
         this.chart = new Chart(this.ctx, {
             type: 'line',
             // improve this
             plugins: this.PLUGINS,
             data: {
-                datasets: [dataset, dataset2]
+                datasets: datasets
             },
             options: {
                 // improve this
@@ -486,7 +486,7 @@ class DfChart {
                     }
                 },
                 events: ['contextmenu', 'mousedown', 'mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'],
-                scales: this.loadScales()
+                scales: this.loadScales(this.options_list[0])
             }
         });
         
@@ -500,9 +500,9 @@ class DfChart {
         this.updateTagBox();
     }
 
-    getData() {
-        return this.chart.data.datasets[0].data;
-    }
+    // getData() {
+    //     return this.chart.data.datasets[0].data;
+    // }
     
     updateTagBox() {
         this.tags_ui_box.innerHTML = '';
@@ -528,26 +528,31 @@ class DfChart {
 
     }
 
-    loadScales() {
+    loadScales(base_options) {
         return { 
-            x: this.options.loadScalesOptions(this.options.x_options),
-            y: this.options.loadScalesOptions(this.options.y_options)
+            x: base_options.loadScalesOptions(base_options.x_options),
+            y: base_options.loadScalesOptions(base_options.y_options)
         }
     }
 
     deleteSelectedChartData() {
-        this.chart.data.datasets[0].data = this.chart.getDatasetMeta(0).data
-            .filter(p => this.PLUGINS[0].currentSelected.find(p2 => p2.$context.dataIndex == p.$context.dataIndex) === undefined)
-            .map(p => p.$context.raw);
+        for (let i = 0; i < this.chart.data.datasets.length; i++) {
+            this.chart.data.datasets[i].data = this.chart.getDatasetMeta(i).data
+                .filter(p => this.PLUGINS[0].currentSelected[i].find(p2 => p2.$context.dataIndex == p.$context.dataIndex) === undefined)
+                .map(p => p.$context.raw);
 
-        this.PLUGINS[0].currentSelected = [];
+            this.PLUGINS[0].currentSelected = [];
+        }
         this.chart.update();
     }    
     
     selectTag(tagName) {
-        this.PLUGINS[0].lastSelected = this.chart.getDatasetMeta(0).data
-            .filter(p => p.$context.raw?.tags.includes(tagName));
-
+        var last_se = [];
+        for (let i = 0; i < this.chart.data.datasets.length; i++) {
+            last_se.push(this.chart.getDatasetMeta(i).data
+            .filter(p => p.$context.raw?.tags.includes(tagName)));
+        }
+        this.PLUGINS[0].lastSelected = last_se;
         this.chart.render();
     }
 
@@ -557,17 +562,20 @@ class DfChart {
     }
 
     setSelectedTag(tagName) {
-        this.chart.data.datasets[0].data = this.chart.getDatasetMeta(0).data
-            .map(p => {
-                if (this.PLUGINS[0].currentSelected.find(p2 => p2.$context.dataIndex == p.$context.dataIndex) !== undefined) {
-                    if (p.$context.raw.tags && !p.$context.raw.tags.includes(tagName)) {
-                        p.$context.raw.tags.push(tagName);
+        for (let i = 0; i < this.chart.data.datasets.length; i++) {
+            this.chart.data.datasets[i].data = this.chart.getDatasetMeta(i).data
+                .map(p => {
+                    if (this.PLUGINS[i].currentSelected[i].find(p2 => p2.$context.dataIndex == p.$context.dataIndex) !== undefined) {
+                        if (p.$context.raw.tags && !p.$context.raw.tags.includes(tagName)) {
+                            p.$context.raw.tags.push(tagName);
+                        }
+                        else if (!p.$context.raw.tags)
+                            p.$context.raw.tags = [tagName];
                     }
-                    else if (!p.$context.raw.tags)
-                        p.$context.raw.tags = [tagName];
-                }
-                return p.$context.raw;
-            });
+                    return p.$context.raw;
+                });
+        }
+            
 
         if (this.tagsList.findIndex(t => t == tagName) == -1)
             this.tagsList.push(tagName);
@@ -577,36 +585,49 @@ class DfChart {
     }
 
     removeTag(tagName) {
-        this.chart.data.datasets[0].data = this.chart.getDatasetMeta(0).data
-            .map(p => {
-                if (p.$context.raw.tags?.includes(tagName))
-                    p.$context.raw.tags = p.$context.raw.tags.filter(t => t != tagName);
-                return p.$context.raw;
-            });
+        for (let i = 0; i < this.chart.data.datasets.length; i++) {
+            this.chart.data.datasets[i].data = this.chart.getDatasetMeta(i).data
+                .map(p => {
+                    if (p.$context.raw.tags?.includes(tagName))
+                        p.$context.raw.tags = p.$context.raw.tags.filter(t => t != tagName);
+                    return p.$context.raw;
+                });
+        }
         this.tagsList = this.tagsList.filter(t => t != tagName);
         this.updateTagBox();
     }
 
     exportCSV() {
-        let data = this.getData();
-        if (data.length > 0) {
-            // remove w_header, always export with header
-            const headers = this.options.w_header ? [this.options.x_options.text, this.options.y_options.text, TAG_COL].join(',') + '\r\n' : '';
-            let rowsStr = "";
-            for(let val of data) {
+        let headers = [];
+        let file_data = [];
+        for (let i = 0; i < this.chart.data.datasets.length; i++) {
+            let data = this.chart.data.datasets[i].data;
+            let options = this.options_list[i];
+
+            headers.push(options.x_options.text);
+            headers.push(options.y_options.text);
+            headers.push(TAG_COL);
+            for(let idx = 0; idx < data.length; idx++) {
+                const val = data[idx];
                 let x_val = val['x'];
                 let y_val = val['y'];
-                if (this.options.x_options.formatOutput !== undefined)
-                    x_val = this.options.x_options.formatOutput(x_val);
+                if (options.x_options.formatOutput !== undefined)
+                    x_val = options.x_options.formatOutput(x_val);
 
-                if (this.options.y_options.formatOutput !== undefined)
-                    y_val = this.options.y_options.formatOutput(y_val);
+                if (options.y_options.formatOutput !== undefined)
+                    y_val = options.y_options.formatOutput(y_val);
                 
-                rowsStr += [x_val, y_val, val[TAG_COL]?.join(';') ?? ''].join(',') + '\r\n';
+                if (!file_data[idx]) {
+                    file_data[idx] = []
+                }
+
+                file_data[idx].push(x_val);
+                file_data[idx].push(y_val);
+                file_data[idx].push(val[TAG_COL]?.join(';') ?? '');
             }
-            
-            download(headers + rowsStr);
         }
+        let rowsStr = file_data.map(f => f.join(',')).join('\r\n');
+        download(headers.join(',') + '\r\n' + rowsStr);
     }
 
     static readFile(file, options, on_file_loaded) {

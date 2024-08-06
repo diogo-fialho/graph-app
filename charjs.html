@@ -20,6 +20,7 @@
                 <input type="file" class="ipt" />
                 <i class="fa fa-file-excel-o" aria-hidden="true"></i>
                 <span class="txt">drop your csv file here</span>
+                <input type="hidden" class="file-id" />
             </div>
             <div class="data-info">
                 <div class="table-data">
@@ -79,11 +80,11 @@
                     <div class="inputs">
                         <div class="ipt">
                             <label for="">Dataset name</label>
-                            <input type="text" id="graph-name-{{id}}" onchange="saveForm('{{id}}')" />
+                            <input type="text" id="graph-name-{{id}}" />
                         </div>
                         <div class="ipt">
                             <label for="">With header</label>
-                            <input type="checkbox" id="lbl-w-header-{{id}}" checked onchange="saveForm('{{id}}')" />
+                            <input type="checkbox" id="lbl-w-header-{{id}}" checked />
                         </div>
                         <hr>
                         <div class="row">
@@ -110,7 +111,7 @@
                                 </div>
                                 <div class="ipt not-visible">
                                     <label for="">Unit</label>
-                                    <select id="lbl-x-unit-{{id}}" onchange="saveForm('{{id}}')">
+                                    <select id="lbl-x-unit-{{id}}">
                                     </select>
                                 </div>
                             </div>
@@ -137,7 +138,7 @@
                                 </div>
                                 <div class="ipt not-visible">
                                     <label for="">Unit</label>
-                                    <select id="lbl-y-unit-{{id}}" onchange="saveForm('{{id}}')">
+                                    <select id="lbl-y-unit-{{id}}">
                                     </select>
                                 </div>
                             </div>
@@ -300,31 +301,33 @@
             loadFileInput(id, fileInput);
 
             const dropArea = fileInput.parentElement;
-
-            chrts_opts[id] = new DfChartOptions('tmp-'+id);
+            chrts_opts[id] = []
+            // chrts_opts[id] = {
+            //     options: [new DfChartOptions('tmp-'+id)],
+            //     id: 1
+            // };
             
             const SESSION_KEY = 'chart-opts-' + id;
             savers[id] = new Saver(SESSION_KEY);
             savers[TABS_CONFIG_SESSION_KEY] = new Saver(TABS_CONFIG_SESSION_KEY);
             
-            var data_opts = savers[id].load();
-            if (data_opts) {
-                chrts_opts[id].loadFromSave(JSON.parse(data_opts));
-                loadForm(id);
-            }
+            // var data_opts = savers[id].load();
+            // if (data_opts) {
+            //     chrts_opts[id].options.loadFromSave(JSON.parse(data_opts));
+            //     loadForm(id);
+            // }
 
         }
         
 
-        function loadForm(id) {
-            chrts_opts[id].fillForm(id);
+        function loadForm(id, options) {
+            options.fillForm(id);
             onChangeType(id, 'x', document.getElementById(`lbl-x-type-${id}`).value);
             onChangeType(id, 'y', document.getElementById(`lbl-y-type-${id}`).value);
         }
 
         function clearForm(id) {
-            chrts_opts[id].clear();
-            loadForm(id);
+            // loadForm(id, new DfChartOptions('tmp-'+ id));
         }
 
         function saveForm(id) {
@@ -400,8 +403,10 @@
         function addLabels(id) {
             let fileInput = document.querySelector(`#drop-area-${id} .ipt`);
             if (fileInput.files.length > 0) {
-                var lbl_type = LABEL_TYPE[document.getElementById(`lbl-x-type-${id}`).value];
-                chrts_opts[id].loadFromForm(id);
+                var opts = new DfChartOptions('tmp-'+ id);
+                opts.loadFromForm(id);
+                chrts_opts[id].push(opts);
+                clearForm(id);
             }
         }
 
@@ -416,9 +421,6 @@
                 loadOpts.classList.add('not-visible');
                 let loading = document.querySelector(`#ga-${id}.graph-area`);
                 loading.classList.remove('not-visible');
-                var lbl_type = LABEL_TYPE[document.getElementById(`lbl-x-type-${id}`).value];
-                
-                chrts_opts[id].loadFromForm(id);
                     
                 var ctx = document.getElementById(`myLineChart-${id}`).getContext('2d');
                 lineCharts[id] = new DfChart(id, ctx, chrts_opts[id]);
@@ -427,15 +429,17 @@
         }
 
         function onChangeColumnName(id, k, value) {
-            if (data_loaded[id].header[value].type == LABEL_TYPE.date) {
-                loadFormats(id, k, data_loaded[id].header[value].formats);
+            const last_data_id = document.querySelector(`#drop-area-${id} .file-id`).value;
+            const data_load = data_loaded[id].find(v => v.id == last_data_id).data;
+            if (data_load.header[value].type == LABEL_TYPE.date) {
+                loadFormats(id, k, data_load.header[value].formats);
             }
 
-            let valueToShow = data_loaded[id].header[value].data.filter(d => d !== undefined && d !== '')[0];
+            let valueToShow = data_load.header[value].data.filter(d => d !== undefined && d !== '')[0];
 
-            document.getElementById(`lbl-${k}-type-${id}`).value = data_loaded[id].header[value].type;
+            document.getElementById(`lbl-${k}-type-${id}`).value = data_load.header[value].type;
             document.getElementById(`example-value-${k}-${id}`).innerText = valueToShow;
-            onChangeType(id, k, data_loaded[id].header[value].type);
+            onChangeType(id, k, data_load.header[value].type);
         }
 
         function onChangeType(id, k, value) {
@@ -451,7 +455,6 @@
                     div_unit.classList.add('not-visible');
                 }
             }
-            saveForm(id);
         }
 
         function loadFileInput(id, fileInput) {
@@ -496,7 +499,14 @@
             });
 
             function afterLoadFile(id, data) {
-                data_loaded[id] = data;
+                if (!data_loaded[id])
+                    data_loaded[id] = [];
+
+                let next_id = (Math.max(null,data_loaded[id].map(v => v.id)) ?? 0) + 1;
+                debugger
+                let hidden_file_id = dropArea.querySelector('.file-id');
+                hidden_file_id.value = next_id;
+                data_loaded[id].push({data: data, id: next_id});
                 document.getElementById(`graph-name-${id}`).value = removeFileExtension(data.dataset_name);
                 loadColumnNames(id, data);
             }
