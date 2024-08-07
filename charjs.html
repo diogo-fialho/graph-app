@@ -12,82 +12,116 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon"></script>
     <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom/dist/chartjs-plugin-zoom.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/mdbassit/Coloris@latest/dist/coloris.min.css"/>
+    <script src="https://cdn.jsdelivr.net/gh/mdbassit/Coloris@latest/dist/coloris.min.js"></script>
 </head>
 <body>
     <div id="tab-graph-template" class="not-visible">
         <div id="graph-{{id}}" class="dialog">
-            <div id="drop-area-{{id}}" class="drop-area">
-                <input type="file" class="ipt" />
-                <i class="fa fa-file-excel-o" aria-hidden="true"></i>
-                <span class="txt">drop your csv file here</span>
-            </div>
-            <div class="form">
+            <div class="cl">
+                <div id="drop-area-{{id}}" class="drop-area">
+                    <input type="file" class="ipt" />
+                    <i class="fa fa-file-excel-o" aria-hidden="true"></i>
+                    <span class="txt">drop your csv file here</span>
+                    <input type="hidden" class="file-id" />
+                </div>
+                
+                <div class="form">
         
-                <div class="inputs">
-                    <div class="ipt">
-                        <label for="">Dataset name</label>
-                        <input type="text" id="graph-name-{{id}}" onchange="saveForm('{{id}}')" />
+                    <div class="inputs">
+                        <div class="ipt">
+                            <label for="">Dataset name</label>
+                            <input type="text" id="graph-name-{{id}}" />
+                        </div>
+                        <div class="ipt">
+                            <label for="">With header</label>
+                            <input type="checkbox" id="lbl-w-header-{{id}}" checked />
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="group-ipt col-6">
+                                <h4>Label X</h4>
+                                <div class="ipt">
+                                    <label for="">Column</label>
+                                    <select id="lbl-x-col-{{id}}" onchange="onChangeColumnName('{{id}}', 'x', this.value)">
+                                    </select>
+                                </div>
+                                <div class="ipt">
+                                    <label for="">Example:</label>
+                                    <div class="ipt-div ex-value"><span class="badge bg-light text-dark" id="example-value-x-{{id}}"></span></div>
+                                </div>
+                                <div class="ipt">
+                                    <label for="">Type</label>
+                                    <select id="lbl-x-type-{{id}}" onchange="onChangeType('{{id}}', 'x', this.value)">
+                                    </select>
+                                </div>
+                                <div class="ipt not-visible">
+                                    <label for="">Format</label>
+                                    <select id="lbl-x-format-{{id}}">
+                                    </select>
+                                </div>
+                                <div class="ipt not-visible">
+                                    <label for="">Unit</label>
+                                    <select id="lbl-x-unit-{{id}}">
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="group-ipt col-6">
+                                <h4>Label Y</h4>
+                                <div class="ipt">
+                                    <label for="">Column</label>
+                                    <select id="lbl-y-col-{{id}}" onchange="onChangeColumnName('{{id}}', 'y', this.value)">
+                                    </select>
+                                </div>
+                                <div class="ipt">
+                                    <label for="">Example:</label>
+                                    <div class="ex-value ipt-div"><span class="badge bg-light text-dark" id="example-value-y-{{id}}"></span></div>
+                                </div>
+                                <div class="ipt">
+                                    <label for="">Type</label>
+                                    <select id="lbl-y-type-{{id}}" onchange="onChangeType('{{id}}', 'y', this.value)">
+                                    </select>
+                                </div>
+                                <div class="ipt not-visible">
+                                    <label for="">Format</label>
+                                    <select id="lbl-y-format-{{id}}">
+                                    </select>
+                                </div>
+                                <div class="ipt not-visible">
+                                    <label for="">Unit</label>
+                                    <select id="lbl-y-unit-{{id}}">
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        
                     </div>
-                    <div class="ipt">
-                        <label for="">With header</label>
-                        <input type="checkbox" id="lbl-w-header-{{id}}" checked onchange="saveForm('{{id}}')" />
-                    </div>
-                    <h3>Labels</h3>
-                    <h4>Label X</h4>
-                    <div class="ipt">
-                        <label for="">Column</label>
-                        <select id="lbl-x-col-{{id}}" onchange="onChangeColumnName('{{id}}', 'x', this.value)">
-                        </select>
-                    </div>
-                    <div class="ipt">
-                        <label for="">Example:</label>
-                        <div class="ex-value"><span class="badge bg-light text-dark" id="example-value-x-{{id}}"></span></div>
-                    </div>
-                    <div class="ipt">
-                        <label for="">Type</label>
-                        <select id="lbl-x-type-{{id}}" onchange="onChangeType('{{id}}', 'x', this.value)">
-                        </select>
-                    </div>
-                    <div class="ipt not-visible">
-                        <label for="">Format</label>
-                        <select id="lbl-x-format-{{id}}">
-                        </select>
-                    </div>
-                    <div class="ipt not-visible">
-                        <label for="">Unit</label>
-                        <select id="lbl-x-unit-{{id}}" onchange="saveForm('{{id}}')">
-                        </select>
-                    </div>
-                    <h4>Label Y</h4>
-                    <div class="ipt">
-                        <label for="">Column</label>
-                        <select id="lbl-y-col-{{id}}" onchange="onChangeColumnName('{{id}}', 'y', this.value)">
-                        </select>
-                    </div>
-                    <div class="ipt">
-                        <label for="">Example:</label>
-                        <div class="ex-value"><span class="badge bg-light text-dark" id="example-value-y-{{id}}"></span></div>
-                    </div>
-                    <div class="ipt">
-                        <label for="">Type</label>
-                        <select id="lbl-y-type-{{id}}" onchange="onChangeType('{{id}}', 'y', this.value)">
-                        </select>
-                    </div>
-                    <div class="ipt not-visible">
-                        <label for="">Format</label>
-                        <select id="lbl-y-format-{{id}}">
-                        </select>
-                    </div>
-                    <div class="ipt not-visible">
-                        <label for="">Unit</label>
-                        <select id="lbl-y-unit-{{id}}" onchange="saveForm('{{id}}')">
-                        </select>
+                    <div class="btns">
+                        <button class="btn btn-secondary" onclick="clearForm('{{id}}')">Cancel</button>
+                        <button class="btn btn-primary" onclick="addLabels('{{id}}')">Add</button>
                     </div>
                 </div>
-                <div class="btns">
-                    <button class="btn btn-secondary" onclick="clearForm('{{id}}')">Cancel</button>
+            </div>
+            <div class="data-info">
+                <div class="table-data">
                     <button class="btn btn-primary" onclick="loadGraph('{{id}}')">Load</button>
+                    <table id="table-ct-{{id}}" class="table table-striped">
+                        <thead>
+                          <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Color</th>
+                            <th scope="col">Name</th>
+                            <th scope="col">X Label</th>
+                            <th scope="col">Y Label</th>
+                            <th scope="col"></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                      </table>
                 </div>
+                <hr>
             </div>
         </div>
         <div id="ga-{{id}}" class="graph-area not-visible">
@@ -126,11 +160,19 @@
         </div>
       </div>
     <script>
-
+        Coloris({
+            themeMode: 'dark'
+        });
         const TABS_CONFIG_SESSION_KEY = 'TABS_OPTS';
         const ulTabsElement = document.getElementById('myTab');
         const tabsContents = document.getElementById('myTabContent');
         const graphTabTemplate = document.getElementById('tab-graph-template');
+        const KEYS_TO_VALIDATE = {
+            ctrl: 17,
+            esc: 27,
+            del: 46
+        };
+        let KEYS_ACTIVE = []
         var clickHandler = () => createNewTab();
 
         let chrts_opts = {};
@@ -145,6 +187,7 @@
 
         document.getElementById('tab-0').innerHTML = graphTabTemplate.innerHTML.replaceAll('{{id}}', '0');
         document.querySelector('li.new-tab').children[0].addEventListener('click', clickHandler);
+        loadCustomListeners();
         
         start(currentTotalTabIdx);
         if (extraTabs.length > 0) {
@@ -238,36 +281,98 @@
             loadFileInput(id, fileInput);
 
             const dropArea = fileInput.parentElement;
-
-            chrts_opts[id] = new DfChartOptions('tmp-'+id);
+            chrts_opts[id] = []
+            // chrts_opts[id] = {
+            //     options: [new DfChartOptions('tmp-'+id)],
+            //     id: 1
+            // };
             
             const SESSION_KEY = 'chart-opts-' + id;
             savers[id] = new Saver(SESSION_KEY);
             savers[TABS_CONFIG_SESSION_KEY] = new Saver(TABS_CONFIG_SESSION_KEY);
             
-            var data_opts = savers[id].load();
-            if (data_opts) {
-                chrts_opts[id].loadFromSave(JSON.parse(data_opts));
-                loadForm(id);
-            }
+            // var data_opts = savers[id].load();
+            // if (data_opts) {
+            //     chrts_opts[id].options.loadFromSave(JSON.parse(data_opts));
+            //     loadForm(id);
+            // }
 
         }
         
 
-        function loadForm(id) {
-            chrts_opts[id].fillForm(id);
+        function loadForm(id, options) {
+            options.fillForm(id);
             onChangeType(id, 'x', document.getElementById(`lbl-x-type-${id}`).value);
             onChangeType(id, 'y', document.getElementById(`lbl-y-type-${id}`).value);
         }
 
         function clearForm(id) {
-            chrts_opts[id].clear();
-            loadForm(id);
+            // loadForm(id, new DfChartOptions('tmp-'+ id));
         }
 
         function saveForm(id) {
             chrts_opts[id].loadFromForm(id);
             savers[id].save(JSON.stringify(chrts_opts[id].returnForSave()));
+        }
+
+        function removeOptions(id, key) {
+            delete chrts_opts[id][key];
+            loadTable(id);
+        }
+
+        function loadTable(id) {
+            let table_ele = document.querySelector(`#table-ct-${id} tbody`);
+            table_ele.innerHTML = '';
+            let keys = Object.keys(chrts_opts[id]);
+            let row = 1;
+            for (let key of keys) {
+                let opts = chrts_opts[id][key];
+                let tr_ele = document.createElement('tr');
+                let td_num = document.createElement('th');
+                td_num.innerText = row;
+                tr_ele.appendChild(td_num);
+
+                var color_ele = createTdElement(tr_ele, '');
+                let txt_ele = document.createElement('input');
+                txt_ele.setAttribute('type', 'text');
+                txt_ele.setAttribute('data-coloris', '');
+                txt_ele.classList.add('color-pick');
+                txt_ele.value = opts.color;
+                // txt_ele.style.backgroundColor = txt_ele.value;
+                // txt_ele.style.color = 'transparent';
+                // txt_ele.style.cursor = 'pointer';
+                let btn_color_ele = document.createElement('button');
+                btn_color_ele.style.backgroundColor = txt_ele.value;
+                btn_color_ele.classList.add('btn-color-pick')
+                btn_color_ele.addEventListener('click', () => txt_ele.click());
+                txt_ele.addEventListener('change', (e) => {
+                    opts.color = e.target.value;
+                    btn_color_ele.style.backgroundColor = txt_ele.value;
+                });
+                color_ele.appendChild(btn_color_ele);
+                color_ele.appendChild(txt_ele);
+                createTdElement(tr_ele, opts.text);
+                createTdElement(tr_ele, opts.x_options.text);
+                createTdElement(tr_ele, opts.y_options.text);
+                let btn_td_ele = createTdElement(tr_ele, '');
+                let btn_ele = document.createElement('button');
+                btn_ele.setAttribute('class', 'btn btn-danger btn-sm');
+                btn_ele.innerText = 'Remove';
+                btn_ele.addEventListener('click', () => removeOptions(id, key));
+                btn_td_ele.appendChild(btn_ele);
+
+
+                table_ele.appendChild(tr_ele);
+                row++;
+            }
+
+
+            function createTdElement(tr_ele, value) {
+                let td_ele = document.createElement('td');
+                td_ele.innerHTML = value;
+                tr_ele.appendChild(td_ele);
+                return td_ele;
+            }
         }
 
         function loadLabelTypes(id) {
@@ -335,6 +440,17 @@
             
         }
 
+        function addLabels(id) {
+            let fileInput = document.querySelector(`#drop-area-${id} .ipt`);
+            if (fileInput.files.length > 0) {
+                var opts = new DfChartOptions('tmp-'+ id);
+                opts.loadFromForm(id);
+                chrts_opts[id].push(opts);
+                loadTable(id);
+                clearForm(id);
+            }
+        }
+
         function loadGraph(id) {
             let fileInput = document.querySelector(`#drop-area-${id} .ipt`);
             if (fileInput.files.length > 0) {
@@ -346,9 +462,6 @@
                 loadOpts.classList.add('not-visible');
                 let loading = document.querySelector(`#ga-${id}.graph-area`);
                 loading.classList.remove('not-visible');
-                var lbl_type = LABEL_TYPE[document.getElementById(`lbl-x-type-${id}`).value];
-                
-                chrts_opts[id].loadFromForm(id);
                     
                 var ctx = document.getElementById(`myLineChart-${id}`).getContext('2d');
                 lineCharts[id] = new DfChart(id, ctx, chrts_opts[id]);
@@ -357,15 +470,17 @@
         }
 
         function onChangeColumnName(id, k, value) {
-            if (data_loaded[id].header[value].type == LABEL_TYPE.date) {
-                loadFormats(id, k, data_loaded[id].header[value].formats);
+            const last_data_id = document.querySelector(`#drop-area-${id} .file-id`).value;
+            const data_load = data_loaded[id].find(v => v.id == last_data_id).data;
+            if (data_load.header[value].type == LABEL_TYPE.date) {
+                loadFormats(id, k, data_load.header[value].formats);
             }
 
-            let valueToShow = data_loaded[id].header[value].data.filter(d => d !== undefined && d !== '')[0];
+            let valueToShow = data_load.header[value].data.filter(d => d !== undefined && d !== '')[0];
 
-            document.getElementById(`lbl-${k}-type-${id}`).value = data_loaded[id].header[value].type;
+            document.getElementById(`lbl-${k}-type-${id}`).value = data_load.header[value].type;
             document.getElementById(`example-value-${k}-${id}`).innerText = valueToShow;
-            onChangeType(id, k, data_loaded[id].header[value].type);
+            onChangeType(id, k, data_load.header[value].type);
         }
 
         function onChangeType(id, k, value) {
@@ -381,7 +496,6 @@
                     div_unit.classList.add('not-visible');
                 }
             }
-            saveForm(id);
         }
 
         function loadFileInput(id, fileInput) {
@@ -426,7 +540,14 @@
             });
 
             function afterLoadFile(id, data) {
-                data_loaded[id] = data;
+                if (!data_loaded[id])
+                    data_loaded[id] = [];
+
+                let next_id = (Math.max(null,data_loaded[id].map(v => v.id)) ?? 0) + 1;
+                
+                let hidden_file_id = dropArea.querySelector('.file-id');
+                hidden_file_id.value = next_id;
+                data_loaded[id].push({data: data, id: next_id});
                 document.getElementById(`graph-name-${id}`).value = removeFileExtension(data.dataset_name);
                 loadColumnNames(id, data);
             }
@@ -439,7 +560,33 @@
             // FILE LOGIC
         }
         
-        // FILE LOGIC (END)
+        function loadCustomListeners() {
+            // add custom listeners
+            document.addEventListener('keydown', (e) => {
+                const keys_to_check = Object.values(KEYS_TO_VALIDATE);
+                if (keys_to_check.includes(e.which) && !KEYS_ACTIVE.includes(e.which)) {
+                    KEYS_ACTIVE.push(e.which);
+                }
+            });
+
+            document.addEventListener('keyup', (e) => {
+                let active_tab = document.querySelector('.tab-pane.active');
+                let current_id = active_tab.id.replace('tab-', '');
+                if (e.which == KEYS_TO_VALIDATE.esc) {
+                    lineCharts[current_id].clearSelected();
+                }
+                else if (e.which == KEYS_TO_VALIDATE.del) {
+                    confirmAction('Remove selected points?', () => lineCharts[current_id].deleteSelectedChartData());
+                }
+
+                const keys_to_check = Object.values(KEYS_TO_VALIDATE);
+                if (keys_to_check.includes(e.which)) {
+                    if (KEYS_ACTIVE.includes(e.which)) {
+                        KEYS_ACTIVE = KEYS_ACTIVE.filter(v => v != e.which);
+                    }
+                }
+            });
+        }
    </script>
    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 </body>

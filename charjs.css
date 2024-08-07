@@ -19,15 +19,17 @@ body {
 .not-visible {
     display: none !important;
 }
-
+.tab-pane {
+    /* padding: 50px; */
+}
 .dialog {
     display: flex;
+    gap: 32px
 }
 
 .form {
-    width: 60%;
-    padding: 50px;
-    padding-right: 400px;
+    padding: 20px;
+    width: 1000px;
 }
 
 .form .inputs {
@@ -47,7 +49,7 @@ body {
 
 .form .inputs input,
 .form .inputs select,
-.form .inputs div {
+.form .inputs .ipt-div {
     flex: 8;
     height: 32px;
 }
@@ -59,6 +61,16 @@ body {
 
 .form .inputs input[type="checkbox"] {
     height: 24px;
+}
+
+.table-data {
+    min-width: 700px;
+    min-height: 300px;
+}
+
+table td,
+table th {
+    vertical-align: middle;
 }
 
 .graph-area {
@@ -137,10 +149,7 @@ body {
 }
 
 .drop-area {
-    width: 300px; 
     height: 300px; 
-    margin: auto;
-    margin-top: 100px;
     border: 1px solid black;
     background-color: var(--color-1);
     color: rgba(0, 0, 0, .5);
@@ -156,6 +165,10 @@ body {
 
 .drop-area input.ipt {
     display: none;
+}
+
+.data-info {
+    flex-grow: 1;
 }
 
 .nav-item  {
@@ -185,4 +198,18 @@ body {
 .graph-area {
     height: calc(100vh - 42px);
     width: 100vw;
+}
+
+.btn-color-pick {
+    width: 32px;
+    height: 32px;
+    /* width: 30px; */
+}
+
+.color-pick {
+    visibility: hidden;
+    width: 0px;
+    padding: 0;
+    margin: 0;
+    border: 0;
 }

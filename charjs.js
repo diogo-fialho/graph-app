@@ -4,7 +4,12 @@ const LABEL_TYPE = {
 }
 
 const TIME_UNITS = {
-    hour: 'hour'
+    hour: 'hour',
+    day: 'day',
+    week: 'week',
+    month: 'month',
+    quarter: 'quarter',
+    year: 'year'
 }
 
 const OPTIONS_TYPE = {
@@ -173,26 +178,13 @@ class DfChartOptions {
         x_options = this.X_OPTS_DEFAULT,
         y_options = this.Y_OPTS_DEFAULT,
         w_header = false,
-        w_tags = false) {
+        file_id = undefined) {
         this.text = text;
         this.x_options = x_options;
         this.y_options = y_options;
         this.w_header = w_header;
-        this.w_tags = w_tags;
-        this.colors = {
-            pointBackgroundColor: 'rgba(75, 192, 192, 0.2)',
-            pointSelectedBackgroundColor: 'red',
-            pointBorderColor: 'rgba(75, 192, 192, 1)',
-            pointSelectedBorderColor: 'red',
-        };
-    }
-
-    clear() {
-        this.text = '';
-        this.x_options = this.X_OPTS_DEFAULT;
-        this.y_options = this.Y_OPTS_DEFAULT;
-        this.w_header = false;
-        this.w_tags = false;
+        this.file_id = file_id;
+        this.color = getRandomColor();
     }
     
     loadFromSave(saveData) {
@@ -200,7 +192,6 @@ class DfChartOptions {
         this.x_options = saveData.x_options;
         this.y_options = saveData.y_options;
         this.w_header = saveData.w_header;
-        this.w_tags = saveData.w_tags;
     }
 
     loadFromForm(id) {
@@ -208,7 +199,7 @@ class DfChartOptions {
         this.x_options = this.loadLabelOptions(id, 'x');
         this.y_options = this.loadLabelOptions(id, 'y');
         this.w_header = document.getElementById(`lbl-w-header-${id}`).checked;
-        // this.w_tags = document.getElementById(`lbl-w-tags-${id}`).checked;
+        this.file_id = document.querySelector(`#drop-area-${id} .file-id`).value;
     }
 
     returnForSave() {
@@ -217,14 +208,13 @@ class DfChartOptions {
             x_options: this.x_options,
             y_options: this.y_options,
             w_header: this.w_header,
-            w_tags: this.w_tags,
         }
     }
 
     fillForm(id) {
         document.getElementById(`graph-name-${id}`).value = this.text ?? '';
         document.getElementById(`lbl-w-header-${id}`).checked = this.w_header;
-        // document.getElementById(`lbl-w-tags-${id}`).checked = this.w_tags;
+        document.querySelector(`#drop-area-${id} .file-id`).value = this.file_id;
         this.fillFormLabelOptions(id, this.x_options);
         this.fillFormLabelOptions(id, this.y_options);
     }
@@ -308,73 +298,118 @@ class DfChartOptions {
 class DfBoxSelectPlugin {
     constructor(options) {
         this.options = options;
-        this.ctx = document.getElementById(`layer-2-${options.graphId}`).getContext('2d');
+        this.ctx2 = document.getElementById(`layer-2-${options.graphId}`).getContext('2d');
         this.activeMouse = false;
         this.startCoord = undefined;
         this.lastCoord = undefined;
-        this.currentSelected = undefined;
-        this.lastSelected = undefined;
+        this.currentSelected = {};
+        this.lastSelected = {};
+        this.updateLastSelected = false;
     }
 
     beforeEvent(chart, args, pluginOptions) {
         const event = args.event;
-        if (!this.activeMouse && event.type == 'mousedown') {
-            let canvas_client_rect = this.ctx.canvas.getBoundingClientRect();
-            this.startCoord = [event.native.clientX - canvas_client_rect.left, event.native.clientY - canvas_client_rect.top, event.x, event.y];
-            this.activeMouse = true
-        }
-        else if (this.activeMouse && event.type == 'mousemove') {
-            let canvas_client_rect = this.ctx.canvas.getBoundingClientRect();
-            this.lastCoord = [event.native.clientX - canvas_client_rect.left, event.native.clientY - canvas_client_rect.top, event.x, event.y];
-            this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
-            this.ctx.beginPath();
-            this.ctx.strokeStyle =  'red';
-            this.ctx.moveTo(this.startCoord[0], this.startCoord[1]);
-            this.ctx.lineTo(this.lastCoord[0], this.startCoord[1]);
-            this.ctx.lineTo(this.lastCoord[0], this.lastCoord[1]);
-            this.ctx.moveTo(this.startCoord[0], this.startCoord[1]);
-            this.ctx.lineTo(this.startCoord[0], this.lastCoord[1]);
-            this.ctx.lineTo(this.lastCoord[0], this.lastCoord[1]);
-            this.ctx.stroke();
-        }
-        else if (this.activeMouse && event.type == 'click') {
-            this.activeMouse = false;
-            this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
-            if (this.lastCoord) {
-                var c_dataset = chart.getDatasetMeta(0);
-                this.lastSelected = c_dataset.data.filter(p =>
-                    // atention, only works with circle for now, possibly
-                    p.x <= this.lastCoord[2] + p.options.radius && p.x >= this.startCoord[2] - p.options.radius &&
-                    p.y <= this.lastCoord[3] + p.options.radius && p.y >= this.startCoord[3] - p.options.radius
-                );
+        const is_blocked = KEYS_ACTIVE.includes(KEYS_TO_VALIDATE.ctrl);
+        if (!is_blocked) {
+            if (!this.activeMouse && event.type == 'mousedown') {
+                let points_in_evt = chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true);
+    
+                // no points touched, start select box
+                if (points_in_evt.length == 0) {
+                    let canvas_client_rect = this.ctx2.canvas.getBoundingClientRect();
+                    this.startCoord = [event.native.clientX - canvas_client_rect.left, event.native.clientY - canvas_client_rect.top, event.x, event.y];
+                    this.activeMouse = true;
+                }
+                else {
+                    let idx = points_in_evt[0].datasetIndex.toString();
+                    if (!this.currentSelected[idx]) {
+                        this.currentSelected[idx] = []
+                    }
+                    
+                    let existing_idx = this.currentSelected[idx].findIndex(v => v.$context.dataIndex == points_in_evt[0].index);
+                    if (existing_idx == -1)
+                        this.currentSelected[idx].push(points_in_evt[0].element);
+                    else
+                        this.currentSelected[idx].splice(existing_idx, 1);
+    
+                }
             }
-                
-            this.startCoord = undefined;
-            this.lastCoord = undefined;
-            chart.render();
+            else if (this.activeMouse && event.type == 'mousemove') {
+                let canvas_client_rect = this.ctx2.canvas.getBoundingClientRect();
+                this.lastCoord = [event.native.clientX - canvas_client_rect.left, event.native.clientY - canvas_client_rect.top, event.x, event.y];
+                this.ctx2.clearRect(0, 0, this.ctx2.canvas.width, this.ctx2.canvas.height);
+                this.ctx2.beginPath();
+                this.ctx2.strokeStyle =  'red';
+                this.ctx2.moveTo(this.startCoord[0], this.startCoord[1]);
+                this.ctx2.lineTo(this.lastCoord[0], this.startCoord[1]);
+                this.ctx2.lineTo(this.lastCoord[0], this.lastCoord[1]);
+                this.ctx2.moveTo(this.startCoord[0], this.startCoord[1]);
+                this.ctx2.lineTo(this.startCoord[0], this.lastCoord[1]);
+                this.ctx2.lineTo(this.lastCoord[0], this.lastCoord[1]);
+                this.ctx2.stroke();
+            }
+            else if (this.activeMouse && event.type == 'click') {
+                this.activeMouse = false;
+                this.ctx2.clearRect(0, 0, this.ctx2.canvas.width, this.ctx2.canvas.height);
+                if (this.lastCoord) {
+                    let data_se = [];
+                    for (let i = 0; i < chart.data.datasets.length; i++) {
+                        var c_dataset = chart.getDatasetMeta(i);
+                        data_se[i.toString()] = c_dataset.data.filter(p =>
+                            // atention, only works with circle for now, possibly
+                            p.x <= this.lastCoord[2] + p.options.radius && p.x >= this.startCoord[2] - p.options.radius &&
+                            p.y <= this.lastCoord[3] + p.options.radius && p.y >= this.startCoord[3] - p.options.radius
+                        );
+                    }
+                    
+                    this.lastSelected = data_se;
+                    this.updateLastSelected = true;
+                }
+                    
+                this.startCoord = undefined;
+                this.lastCoord = undefined;
+                chart.render();
+            }
         }
     }
 
     beforeDraw(chart) {
         var canvas_secondary = document.getElementById(`layer-2-${this.options.graphId}`);
         var chart_canvas = chart.canvas;
-
-        canvas_secondary.width = chart_canvas.style.width.replace('px', '');
-        canvas_secondary.height = chart_canvas.style.height.replace('px', '');
-        if (this.lastSelected) {
-            if (this.currentSelected)
-                for (let point of this.currentSelected) {
-                    point.options.backgroundColor = this.options.colors.pointBackgroundColor;   
-                    point.options.borderColor = this.options.colors.pointBorderColor;   
-                }
-            this.currentSelected = this.lastSelected;
-            this.lastSelected = undefined;
+        if (chart_canvas.style.width.replace('px', '') != this.ctx2.canvas.width) {
+            // ATENTION: from w3schools, Tip: Each time the height or width of a canvas is re-set, the canvas content will be cleared (see example at bottom of page).
+            this.ctx2.canvas.width = chart_canvas.style.width.replace('px', '');
+            this.ctx2.canvas.height = chart_canvas.style.height.replace('px', '');
         }
 
-        if (this.currentSelected)        
-            for (let point of this.currentSelected) {
-                point.options.backgroundColor = this.options.colors.pointSelectedBackgroundColor;   
-                point.options.borderColor = this.options.colors.pointSelectedBorderColor;   
+        if (this.updateLastSelected) {
+            let curr_selected_keys = Object.keys(this.currentSelected);
+            if (curr_selected_keys.length > 0)
+                for (let key of curr_selected_keys) {
+                    let points = this.currentSelected[key];
+                    for (let point of points) {
+                        point.options.backgroundColor = point.options.originalColor;   
+                        point.options.borderColor = point.options.originalBorderColor;   
+                    }
+                }
+
+            this.currentSelected = this.lastSelected;
+            this.lastSelected = {};
+            this.updateLastSelected = false;
+        }
+
+        let curr_select_keys = Object.keys(this.currentSelected);
+        if (curr_select_keys.length > 0)    
+            for (let key of curr_select_keys) {
+                let points = this.currentSelected[key];
+                for (let point of points) {
+                    if (!point.options.originalColor) {
+                        point.options.originalColor = point.options.backgroundColor;
+                        point.options.originalBorderColor = point.options.borderColor;
+                    }
+                    point.options.backgroundColor = this.options.colors.pointSelectedBackgroundColor;   
+                    point.options.borderColor = this.options.colors.pointSelectedBorderColor;   
+                }
             }
     }
 }
@@ -411,11 +446,17 @@ class DfChart {
 
     PLUGINS = []
 
-    constructor(id, ctx, options = new DfChartOptions()) {
+    constructor(id, ctx, options_list = []) {
+        this.colors = {
+            pointBackgroundColor: 'rgba(75, 192, 192, 0.2)',
+            pointSelectedBackgroundColor: 'red',
+            pointBorderColor: 'rgba(75, 192, 192, 1)',
+            pointSelectedBorderColor: 'red',
+        };
         this.id = id;
-        this.options = options;
+        this.options_list = options_list;
         this.PLUGINS = [
-            new DfBoxSelectPlugin({ graphId: id, colors: options.colors })
+            new DfBoxSelectPlugin({ graphId: id, colors: this.colors })
         ]
         this.zoom_plugin = new DfZoomPlugin();
         this.ctx = ctx;
@@ -424,58 +465,68 @@ class DfChart {
         // this.last_datasets = undefined;
     }
 
-    load(data) {
-        // load data from columns selected, it should be the name/col
-        // this.options.x_options.text
-        // this.options.y_options.text
-        // tag
-        let dataset_data = []
-        let bg_colors = []
-        let bg_border_colors = []
-        for (let i = 0; i < data.header[this.options.x_options.text].data.length; i++) {
-            const x = data.header[this.options.x_options.text].data[i];
-            const y = data.header[this.options.y_options.text].data[i];
-            const tags = data.header[TAG_COL]?.data[i] !== undefined ? data.header[TAG_COL].data[i].split(';') : []; // this.options.w_tags
-            var val_x = this.options.x_options.formatInput(x);
-            var val_y = this.options.y_options.formatInput(y);
-            if (val_x == undefined || val_y == undefined)
-                continue;
-
-            dataset_data.push({
-                x: val_x,
-                y: val_y,
-                tags: tags
+    loadDatasets(data_loaded) {
+        let datasets = []
+        for (let options of this.options_list) {
+            let dataset_data = []
+            let bg_colors = []
+            let bg_border_colors = []
+            let data = data_loaded.find(v => v.id == options.file_id).data;
+            for (let i = 0; i < data.header[options.x_options.text].data.length; i++) {
+                const x = data.header[options.x_options.text].data[i];
+                const y = data.header[options.y_options.text].data[i];
+                const tags = data.header[TAG_COL]?.data[i] !== undefined ? data.header[TAG_COL].data[i].split(';') : []; // options.w_tags
+                var val_x = options.x_options.formatInput(x);
+                var val_y = options.y_options.formatInput(y);
+                if (val_x == undefined || val_y == undefined)
+                    continue;
+    
+                dataset_data.push({
+                    x: val_x,
+                    y: val_y,
+                    tags: tags
+                });
+                bg_colors.push(options.color);
+                bg_border_colors.push(options.color);
+            }
+            datasets.push({
+                label: options.text, // has to be dataset name
+                data: dataset_data,
+                backgroundColor: bg_colors,
+                borderColor: bg_border_colors,
+                borderWidth: 1,
+                showLine: true
             });
-            bg_colors.push(this.options.colors.pointBackgroundColor);
-            bg_border_colors.push(this.options.colors.pointBorderColor);
         }
-        var dataset = {
-            label: this.options.text, // has to be dataset name
-            data: dataset_data,
-            backgroundColor: bg_colors,
-            borderColor: bg_border_colors,
-            borderWidth: 1,
-            showLine: true
-        }
+        return datasets;
+    }
+
+    load(data_loaded) {
         this.chart = new Chart(this.ctx, {
             type: 'line',
             // improve this
             plugins: this.PLUGINS,
             data: {
-                datasets: [dataset]
+                datasets: this.loadDatasets(data_loaded)
             },
             options: {
                 // improve this
                 plugins: {
                     zoom: {
-                        zoom: this.zoom_plugin.getOptions()
+                        zoom: this.zoom_plugin.getOptions(),
+                        pan: {
+                            enabled: true,
+                            mode: 'xy',
+                            modifierKey: 'ctrl'
+                        }
                     }
                 },
                 events: ['contextmenu', 'mousedown', 'mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'],
-                scales: this.loadScales()
+                scales: this.loadScales(this.options_list[0])
             }
         });
         
+        // fill tagsList
         for (let dts of this.chart.data.datasets) {
             for (let dt of dts.data) {
                 if (dt.tags && dt.tags.findIndex(t => t != '' && !this.tagsList.includes(t)) > -1)
@@ -486,9 +537,9 @@ class DfChart {
         this.updateTagBox();
     }
 
-    getData() {
-        return this.chart.data.datasets[0].data;
-    }
+    // getData() {
+    //     return this.chart.data.datasets[0].data;
+    // }
     
     updateTagBox() {
         this.tags_ui_box.innerHTML = '';
@@ -514,26 +565,32 @@ class DfChart {
 
     }
 
-    loadScales() {
+    loadScales(base_options) {
         return { 
-            x: this.options.loadScalesOptions(this.options.x_options),
-            y: this.options.loadScalesOptions(this.options.y_options)
+            x: base_options.loadScalesOptions(base_options.x_options),
+            y: base_options.loadScalesOptions(base_options.y_options)
         }
     }
 
     deleteSelectedChartData() {
-        this.chart.data.datasets[0].data = this.chart.getDatasetMeta(0).data
-            .filter(p => this.PLUGINS[0].currentSelected.find(p2 => p2.$context.dataIndex == p.$context.dataIndex) === undefined)
-            .map(p => p.$context.raw);
+        for (let i = 0; i < this.chart.data.datasets.length; i++) {
+            this.chart.data.datasets[i].data = this.chart.getDatasetMeta(i).data
+                .filter(p => this.PLUGINS[0].currentSelected[i.toString()]?.find(p2 => p2.$context.dataIndex == p.$context.dataIndex) === undefined)
+                .map(p => p.$context.raw);
 
-        this.PLUGINS[0].currentSelected = [];
+        }
+        this.PLUGINS[0].currentSelected = {};
         this.chart.update();
     }    
     
     selectTag(tagName) {
-        this.PLUGINS[0].lastSelected = this.chart.getDatasetMeta(0).data
-            .filter(p => p.$context.raw?.tags.includes(tagName));
-
+        var last_se = [];
+        for (let i = 0; i < this.chart.data.datasets.length; i++) {
+            last_se.push(this.chart.getDatasetMeta(i).data
+            .filter(p => p.$context.raw?.tags.includes(tagName)));
+        }
+        this.PLUGINS[0].lastSelected = last_se;
+        this.PLUGINS[0].updateLastSelected = true;
         this.chart.render();
     }
 
@@ -543,17 +600,20 @@ class DfChart {
     }
 
     setSelectedTag(tagName) {
-        this.chart.data.datasets[0].data = this.chart.getDatasetMeta(0).data
-            .map(p => {
-                if (this.PLUGINS[0].currentSelected.find(p2 => p2.$context.dataIndex == p.$context.dataIndex) !== undefined) {
-                    if (p.$context.raw.tags && !p.$context.raw.tags.includes(tagName)) {
-                        p.$context.raw.tags.push(tagName);
+        for (let i = 0; i < this.chart.data.datasets.length; i++) {
+            this.chart.data.datasets[i].data = this.chart.getDatasetMeta(i).data
+                .map(p => {
+                    if (this.PLUGINS[0].currentSelected[i.toString()]?.find(p2 => p2.$context.dataIndex == p.$context.dataIndex) !== undefined) {
+                        if (p.$context.raw.tags && !p.$context.raw.tags.includes(tagName)) {
+                            p.$context.raw.tags.push(tagName);
+                        }
+                        else if (!p.$context.raw.tags)
+                            p.$context.raw.tags = [tagName];
                     }
-                    else if (!p.$context.raw.tags)
-                        p.$context.raw.tags = [tagName];
-                }
-                return p.$context.raw;
-            });
+                    return p.$context.raw;
+                });
+        }
+            
 
         if (this.tagsList.findIndex(t => t == tagName) == -1)
             this.tagsList.push(tagName);
@@ -563,36 +623,49 @@ class DfChart {
     }
 
     removeTag(tagName) {
-        this.chart.data.datasets[0].data = this.chart.getDatasetMeta(0).data
-            .map(p => {
-                if (p.$context.raw.tags?.includes(tagName))
-                    p.$context.raw.tags = p.$context.raw.tags.filter(t => t != tagName);
-                return p.$context.raw;
-            });
+        for (let i = 0; i < this.chart.data.datasets.length; i++) {
+            this.chart.data.datasets[i].data = this.chart.getDatasetMeta(i).data
+                .map(p => {
+                    if (p.$context.raw.tags?.includes(tagName))
+                        p.$context.raw.tags = p.$context.raw.tags.filter(t => t != tagName);
+                    return p.$context.raw;
+                });
+        }
         this.tagsList = this.tagsList.filter(t => t != tagName);
         this.updateTagBox();
     }
 
     exportCSV() {
-        let data = this.getData();
-        if (data.length > 0) {
-            // remove w_header, always export with header
-            const headers = this.options.w_header ? [this.options.x_options.text, this.options.y_options.text, TAG_COL].join(',') + '\r\n' : '';
-            let rowsStr = "";
-            for(let val of data) {
+        let headers = [];
+        let file_data = [];
+        for (let i = 0; i < this.chart.data.datasets.length; i++) {
+            let data = this.chart.data.datasets[i].data;
+            let options = this.options_list[i];
+
+            headers.push(options.x_options.text);
+            headers.push(options.y_options.text);
+            headers.push(TAG_COL);
+            for(let idx = 0; idx < data.length; idx++) {
+                const val = data[idx];
                 let x_val = val['x'];
                 let y_val = val['y'];
-                if (this.options.x_options.formatOutput !== undefined)
-                    x_val = this.options.x_options.formatOutput(x_val);
+                if (options.x_options.formatOutput !== undefined)
+                    x_val = options.x_options.formatOutput(x_val);
 
-                if (this.options.y_options.formatOutput !== undefined)
-                    y_val = this.options.y_options.formatOutput(y_val);
+                if (options.y_options.formatOutput !== undefined)
+                    y_val = options.y_options.formatOutput(y_val);
                 
-                rowsStr += [x_val, y_val, val[TAG_COL]?.join(';') ?? ''].join(',') + '\r\n';
+                if (!file_data[idx]) {
+                    file_data[idx] = []
+                }
+
+                file_data[idx].push(x_val);
+                file_data[idx].push(y_val);
+                file_data[idx].push(val[TAG_COL]?.join(';') ?? '');
             }
-            
-            download(headers + rowsStr);
         }
+        let rowsStr = file_data.map(f => f.join(',')).join('\r\n');
+        download(headers.join(',') + '\r\n' + rowsStr);
     }
 
     static readFile(file, options, on_file_loaded) {
@@ -693,9 +766,10 @@ class DfChart {
         this.OPTIONS[type].callback();
     }
 
-    readFormat(value) {
-        if (typeof date.getMonth === 'function')
-            return 
+    clearSelected() {
+        this.PLUGINS[0].lastSelected = {};
+        this.PLUGINS[0].updateLastSelected = true;
+        this.chart.render();
     }
 }
 
