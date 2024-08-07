@@ -316,7 +316,7 @@
         }
 
         function removeOptions(id, key) {
-            delete chrts_opts[id][key];
+            chrts_opts[id] = chrts_opts[id].filter(opts => chrts_opts[id].indexOf(opts) != key);
             loadTable(id);
         }
 
@@ -572,11 +572,13 @@
             document.addEventListener('keyup', (e) => {
                 let active_tab = document.querySelector('.tab-pane.active');
                 let current_id = active_tab.id.replace('tab-', '');
-                if (e.which == KEYS_TO_VALIDATE.esc) {
-                    lineCharts[current_id].clearSelected();
-                }
-                else if (e.which == KEYS_TO_VALIDATE.del) {
-                    confirmAction('Remove selected points?', () => lineCharts[current_id].deleteSelectedChartData());
+                if (lineCharts[current_id]) {
+                    if (e.which == KEYS_TO_VALIDATE.esc) {
+                        lineCharts[current_id].clearSelected();
+                    }
+                    else if (e.which == KEYS_TO_VALIDATE.del) {
+                        confirmAction('Remove selected points?', () => lineCharts[current_id].deleteSelectedChartData());
+                    }
                 }
 
                 const keys_to_check = Object.values(KEYS_TO_VALIDATE);
