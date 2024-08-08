@@ -484,11 +484,14 @@ class DfChart {
         this.ctx = ctx;
         this.tagsList = [];
         this.tags_ui_box = document.getElementById(`tags-box-${id}`);
+        this.deletedDataMaxLenght = 5;
+        this.deletedData = [];
         // this.last_datasets = undefined;
     }
 
     loadDatasets(data_loaded) {
         let datasets = []
+        let dataSetIdx = 0;
         for (let options of this.options_list) {
             let dataset_data = []
             let bg_colors = []
@@ -511,6 +514,7 @@ class DfChart {
                 bg_colors.push(options.color);
                 bg_border_colors.push(options.color);
             }
+            this.deletedData[dataSetIdx.toString()] = [];
             datasets.push({
                 label: options.text, // has to be dataset name
                 data: dataset_data,
@@ -519,6 +523,7 @@ class DfChart {
                 borderWidth: 1,
                 showLine: true
             });
+            dataSetIdx++;
         }
         return datasets;
     }
@@ -600,10 +605,33 @@ class DfChart {
                 .filter(p => this.PLUGINS[0].currentSelected[i.toString()]?.find(p2 => p2.$context.dataIndex == p.$context.dataIndex) === undefined)
                 .map(p => p.$context.raw);
 
+            this.deletedData[i.toString()].push(this.chart.getDatasetMeta(i).data
+                .filter(p => this.PLUGINS[0].currentSelected[i.toString()]?.find(p2 => p2.$context.dataIndex == p.$context.dataIndex) !== undefined)
+                .map((p) => ({ cont: p.$context.raw, id: p.$context.dataIndex})));
+            if (this.deletedData[i.toString()].length > this.deletedDataMaxLenght) {
+                this.deletedData[i.toString()].shift();
+            }
         }
+
         this.PLUGINS[0].currentSelected = {};
         this.chart.update();
     }    
+
+    undo() {
+        if (this.deletedData) {
+            var keys = Object.keys(this.deletedData);
+            for (let i of keys) {
+                let lastData = this.deletedData[i].pop();
+                if (lastData) {
+                    for (let dt of lastData) {
+                        this.chart.data.datasets[i].data.splice(dt.id, 0, dt.cont);
+                    }
+                }
+            }
+
+            this.chart.update();
+        }
+    }
     
     selectTag(tagName) {
         var last_se = [];

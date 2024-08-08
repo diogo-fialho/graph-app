@@ -172,7 +172,8 @@
             esc: 27,
             del: 46,
             shift: 16,
-            t: 84
+            t: 84,
+            z: 90
         };
         let KEYS_ACTIVE = []
         var clickHandler = () => createNewTab();
@@ -580,6 +581,9 @@
                     }
                     else if (e.which == KEYS_TO_VALIDATE.del) {
                         confirmAction('Remove selected points?', () => lineCharts[current_id].deleteSelectedChartData());
+                    }
+                    else if (KEYS_ACTIVE.includes(KEYS_TO_VALIDATE.ctrl) && KEYS_ACTIVE.includes(KEYS_TO_VALIDATE.z)) {
+                        lineCharts[current_id].undo();
                     }
                 }
 
