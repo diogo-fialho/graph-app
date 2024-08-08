@@ -311,6 +311,8 @@ class DfBoxSelectPlugin {
         const event = args.event;
         const is_blocked = KEYS_ACTIVE.includes(KEYS_TO_VALIDATE.ctrl);
         if (!is_blocked) {
+            // by default do zoom behaviour
+            const selectData = KEYS_ACTIVE.includes(KEYS_TO_VALIDATE.shift);
             if (!this.activeMouse && event.type == 'mousedown') {
                 let points_in_evt = chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true);
     
@@ -339,7 +341,7 @@ class DfBoxSelectPlugin {
                 this.lastCoord = [event.native.clientX - canvas_client_rect.left, event.native.clientY - canvas_client_rect.top, event.x, event.y];
                 this.ctx2.clearRect(0, 0, this.ctx2.canvas.width, this.ctx2.canvas.height);
                 this.ctx2.beginPath();
-                this.ctx2.strokeStyle =  'red';
+                this.ctx2.strokeStyle = selectData ? this.options.colors.selectBoxColor : this.options.colors.zoomBoxColor;
                 this.ctx2.moveTo(this.startCoord[0], this.startCoord[1]);
                 this.ctx2.lineTo(this.lastCoord[0], this.startCoord[1]);
                 this.ctx2.lineTo(this.lastCoord[0], this.lastCoord[1]);
@@ -352,18 +354,36 @@ class DfBoxSelectPlugin {
                 this.activeMouse = false;
                 this.ctx2.clearRect(0, 0, this.ctx2.canvas.width, this.ctx2.canvas.height);
                 if (this.lastCoord) {
-                    let data_se = [];
-                    for (let i = 0; i < chart.data.datasets.length; i++) {
-                        var c_dataset = chart.getDatasetMeta(i);
-                        data_se[i.toString()] = c_dataset.data.filter(p =>
-                            // atention, only works with circle for now, possibly
-                            p.x <= this.lastCoord[2] + p.options.radius && p.x >= this.startCoord[2] - p.options.radius &&
-                            p.y <= this.lastCoord[3] + p.options.radius && p.y >= this.startCoord[3] - p.options.radius
-                        );
+                    if (selectData) {
+                        let data_se = [];
+                        for (let i = 0; i < chart.data.datasets.length; i++) {
+                            var c_dataset = chart.getDatasetMeta(i);
+                            data_se[i.toString()] = c_dataset.data.filter(p =>
+                                // atention, only works with circle for now, possibly
+                                p.x <= this.lastCoord[2] + p.options.radius && p.x >= this.startCoord[2] - p.options.radius &&
+                                p.y <= this.lastCoord[3] + p.options.radius && p.y >= this.startCoord[3] - p.options.radius
+                            );
+                        }
+                        
+                        this.lastSelected = data_se;
+                        this.updateLastSelected = true;
                     }
-                    
-                    this.lastSelected = data_se;
-                    this.updateLastSelected = true;
+                    else {
+                        var xScale = chart.scales.x;
+                        var yScale = chart.scales.y;
+    
+                        var startXValue = xScale.getValueForPixel(this.startCoord[0]);
+                        var lastXValue = xScale.getValueForPixel(this.lastCoord[0]);
+                        var startYValue = yScale.getValueForPixel(this.startCoord[1]);
+                        var lastYValue = yScale.getValueForPixel(this.lastCoord[1]);
+                        var newXMin = startXValue < lastXValue ? startXValue : lastXValue;
+                        var newXMax = startXValue < lastXValue ? lastXValue : startXValue;
+                        var newYMin = startYValue < lastYValue ? startYValue : lastYValue;
+                        var newYMax = startYValue < lastYValue ? lastYValue : startYValue;
+                        // Use the zoom function to zoom into the new range
+                        chart.zoomScale('x', { min: newXMin, max: newXMax });
+                        chart.zoomScale('y', { min: newYMin, max: newYMax });
+                    }
                 }
                     
                 this.startCoord = undefined;
@@ -452,6 +472,8 @@ class DfChart {
             pointSelectedBackgroundColor: 'red',
             pointBorderColor: 'rgba(75, 192, 192, 1)',
             pointSelectedBorderColor: 'red',
+            selectBoxColor: 'red',
+            zoomBoxColor: 'green'
         };
         this.id = id;
         this.options_list = options_list;
