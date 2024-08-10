@@ -16,6 +16,9 @@
     <script src="https://cdn.jsdelivr.net/gh/mdbassit/Coloris@latest/dist/coloris.min.js"></script>
 </head>
 <body>
+    <div class="alert alert-dark" role="alert">
+        A simple primary alert—check it out!
+    </div>
     <div id="tab-graph-template" class="not-visible">
         <div id="graph-{{id}}" class="dialog">
             <div class="cl">
@@ -584,6 +587,10 @@
                     }
                     else if (KEYS_ACTIVE.includes(KEYS_TO_VALIDATE.ctrl) && KEYS_ACTIVE.includes(KEYS_TO_VALIDATE.z)) {
                         lineCharts[current_id].undo();
+                    }
+                    else if (e.which == KEYS_TO_VALIDATE.t) {
+                        debugger
+                        lineCharts[current_id].setSelectedTagById(`tag-name-${current_id}`);
                     }
                 }
 

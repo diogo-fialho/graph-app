@@ -29,7 +29,6 @@ body {
 
 .form {
     padding: 20px;
-    width: 1000px;
 }
 
 .form .inputs {
@@ -200,6 +199,14 @@ table th {
     width: 100vw;
 }
 
+.tab-pane {
+    overflow-x: auto;
+}
+
+.cl, .data-info {
+    flex: 6;
+}
+
 .btn-color-pick {
     width: 32px;
     height: 32px;
@@ -212,4 +219,18 @@ table th {
     padding: 0;
     margin: 0;
     border: 0;
+}
+
+
+.alert {
+    position: fixed;
+    z-index: 10;
+    right: 32px;
+    bottom: 16px;
+    transform: translateY(100px);
+    transition: transform 0.3s ease-in-out;
+}
+
+.alert.show {
+    transform: translateY(0px);
 }

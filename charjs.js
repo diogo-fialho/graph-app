@@ -646,7 +646,8 @@ class DfChart {
 
     setSelectedTagById(inputId) {
         var tagName = document.getElementById(inputId).value;
-        this.setSelectedTag(tagName);
+        if (tagName && tagName != '' )
+            this.setSelectedTag(tagName);
     }
 
     setSelectedTag(tagName) {
