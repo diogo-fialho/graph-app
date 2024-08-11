@@ -309,10 +309,10 @@ class DfBoxSelectPlugin {
 
     beforeEvent(chart, args, pluginOptions) {
         const event = args.event;
-        const is_blocked = KEYS_ACTIVE.includes(KEYS_TO_VALIDATE.ctrl);
+        const is_blocked = KEYS_ACTIVE.includes(KEYS_TO_VALIDATE.ctrl.code[0]);
         if (!is_blocked) {
             // by default do zoom behaviour
-            const selectData = KEYS_ACTIVE.includes(KEYS_TO_VALIDATE.shift);
+            const selectData = KEYS_ACTIVE.includes(KEYS_TO_VALIDATE.shift.code[0]);
             if (!this.activeMouse && event.type == 'mousedown') {
                 let points_in_evt = chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true);
     

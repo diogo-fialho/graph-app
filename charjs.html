@@ -171,13 +171,32 @@
         const tabsContents = document.getElementById('myTabContent');
         const graphTabTemplate = document.getElementById('tab-graph-template');
         const KEYS_TO_VALIDATE = {
-            ctrl: 17,
-            esc: 27,
-            del: 46,
-            shift: 16,
-            t: 84,
-            z: 90
+            ctrl: {
+                code: [17],
+                action: undefined
+            },
+            shift: {
+                code: [16],
+                action: undefined
+            },
+            esc: {
+                code: [27],
+                action: (chartId) => lineCharts[chartId].clearSelected()
+            },
+            del: {
+                code: [46],
+                action: (chartId) => confirmAction('Remove selected points?', () => lineCharts[chartId].deleteSelectedChartData())
+            },
+            t:  {
+                code: [84],
+                action: (chartId) => lineCharts[chartId].setSelectedTagById(`tag-name-${chartId}`)
+            },
+            shift_z: {
+                code: [16, 90],
+                action: (chartId) => lineCharts[chartId].undo()
+            }
         };
+
         let KEYS_ACTIVE = []
         var clickHandler = () => createNewTab();
 
@@ -570,37 +589,41 @@
             // add custom listeners
             document.addEventListener('keydown', (e) => {
                 const keys_to_check = Object.values(KEYS_TO_VALIDATE);
-                if (keys_to_check.includes(e.which) && !KEYS_ACTIVE.includes(e.which)) {
+                if (keys_to_check.findIndex(k => k.code.includes(e.which)) > -1 && !KEYS_ACTIVE.includes(e.which)) {
                     KEYS_ACTIVE.push(e.which);
                 }
             });
 
             document.addEventListener('keyup', (e) => {
                 let active_tab = document.querySelector('.tab-pane.active');
-                let current_id = active_tab.id.replace('tab-', '');
-                if (lineCharts[current_id]) {
-                    if (e.which == KEYS_TO_VALIDATE.esc) {
-                        lineCharts[current_id].clearSelected();
-                    }
-                    else if (e.which == KEYS_TO_VALIDATE.del) {
-                        confirmAction('Remove selected points?', () => lineCharts[current_id].deleteSelectedChartData());
-                    }
-                    else if (KEYS_ACTIVE.includes(KEYS_TO_VALIDATE.ctrl) && KEYS_ACTIVE.includes(KEYS_TO_VALIDATE.z)) {
-                        lineCharts[current_id].undo();
-                    }
-                    else if (e.which == KEYS_TO_VALIDATE.t) {
-                        debugger
-                        lineCharts[current_id].setSelectedTagById(`tag-name-${current_id}`);
-                    }
-                }
+                let chartId = active_tab.id.replace('tab-', '');
+                if (lineCharts[chartId])
+                    keyAction(chartId, e.which);
 
                 const keys_to_check = Object.values(KEYS_TO_VALIDATE);
-                if (keys_to_check.includes(e.which)) {
+                if (keys_to_check.findIndex(k => k.code.includes(e.which)) > -1) {
                     if (KEYS_ACTIVE.includes(e.which)) {
                         KEYS_ACTIVE = KEYS_ACTIVE.filter(v => v != e.which);
                     }
                 }
             });
+
+            function keyAction(chartId, keyCode) {
+                const keys_to_check = Object.values(KEYS_TO_VALIDATE);
+                const actionKeyIdx = keys_to_check.findIndex(k => k.code.includes(keyCode));
+                let performAction = false;
+                if (actionKeyIdx > -1 && keys_to_check[actionKeyIdx].action != undefined) {
+                    keys_to_check[actionKeyIdx].code.forEach(actKey => {
+                        performAction = KEYS_ACTIVE.includes(actKey);
+                        if (!performAction)
+                            return;
+                    });
+                    
+                    if (performAction)
+                        keys_to_check[actionKeyIdx].action(chartId);
+                }
+                console.log(`perform: ${performAction}, keyCode: ${keyCode}`)
+            }
         }
    </script>
    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
