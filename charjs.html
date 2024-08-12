@@ -41,8 +41,12 @@
                             <input type="checkbox" id="lbl-w-header-{{id}}" checked />
                         </div>
                         <div class="ipt">
-                            <label for="">With corr Line</label>
-                            <input type="checkbox" id="lbl-w-mid-line-{{id}}" />
+                            <label for="">Show Line</label>
+                            <input type="checkbox" id="lbl-w-line-{{id}}" />
+                        </div>
+                        <div class="ipt">
+                            <label for="">Show Correlation Line</label>
+                            <input type="checkbox" id="lbl-w-corr-line-{{id}}" />
                         </div>
                         <hr>
                         <div class="row">
@@ -204,10 +208,14 @@
                 code: [84],
                 action: (chartId) => lineCharts[chartId].setSelectedTagById(`tag-name-${chartId}`)
             },
-            shift_z: {
-                code: [16, 90],
+            ctrl_z: {
+                code: [17, 90],
                 action: (chartId) => lineCharts[chartId].undo()
-            }
+            },
+            // ctrl_shift_z: {
+            //     code: [16, 17, 90],
+            //     action: (chartId) => lineCharts[chartId].redo()
+            // }
         };
 
         let KEYS_ACTIVE = []
@@ -629,12 +637,12 @@
             function keyAction(chartId, keyCode) {
                 const keys_to_check = Object.values(KEYS_TO_VALIDATE);
                 const actionKeyIdx = keys_to_check.findIndex(k => k.code.includes(keyCode));
-                let performAction = false;
-                if (actionKeyIdx > -1 && !textInputActive && keys_to_check[actionKeyIdx].action != undefined) {
+                let performAction = actionKeyIdx > -1 && !textInputActive && keys_to_check[actionKeyIdx].action != undefined;
+                if (performAction) {
                     keys_to_check[actionKeyIdx].code.forEach(actKey => {
-                        performAction = KEYS_ACTIVE.includes(actKey);
-                        if (!performAction)
-                            return;
+                        const keyActive = KEYS_ACTIVE.includes(actKey);
+                        if (!KEYS_ACTIVE.includes(actKey))
+                            performAction = false;
                     });
                     
                     if (performAction)

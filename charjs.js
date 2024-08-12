@@ -179,14 +179,16 @@ class DfChartOptions {
         y_options = this.Y_OPTS_DEFAULT,
         w_header = false,
         file_id = undefined,
-        w_mid_line = false) {
+        w_line = false,
+        w_corr_line = false) {
         this.text = text;
         this.x_options = x_options;
         this.y_options = y_options;
         this.w_header = w_header;
         this.file_id = file_id;
         this.color = getRandomColor();
-        this.w_mid_line = w_mid_line;
+        this.w_line = w_line;
+        this.w_corr_line = w_corr_line;
     }
     
     loadFromSave(saveData) {
@@ -202,7 +204,8 @@ class DfChartOptions {
         this.y_options = this.loadLabelOptions(id, 'y');
         this.w_header = document.getElementById(`lbl-w-header-${id}`).checked;
         this.file_id = document.querySelector(`#drop-area-${id} .file-id`).value;
-        this.w_mid_line = document.getElementById(`lbl-w-mid-line-${id}`).checked;
+        this.w_line = document.getElementById(`lbl-w-line-${id}`).checked;
+        this.w_corr_line = document.getElementById(`lbl-w-corr-line-${id}`).checked;
     }
 
     returnForSave() {
@@ -527,10 +530,11 @@ class DfChart {
                 backgroundColor: bg_colors,
                 borderColor: bg_border_colors,
                 borderWidth: 1,
-                showLine: false
+                showLine: options.w_line
             });
 
-            if (options.w_mid_line) {
+            if (options.w_corr_line) {
+                debugger
                 const minX = Math.min(...dataset_data.map(point => point.x));
                 const maxX = Math.max(...dataset_data.map(point => point.x));
                 const maxY = Math.max(...dataset_data.map(point => point.y));
