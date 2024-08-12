@@ -148,7 +148,7 @@
                 </div>
                 <div class="btns">
                     <div class="tag-search">
-                        <input type="text" id="tag-name-{{id}}" onfocusin="KEYS_TO_VALIDATE.t.ignore = true;" onfocusout="KEYS_TO_VALIDATE.t.ignore = false;"/>
+                        <input type="text" id="tag-name-{{id}}" onfocusin="textInputActive = true;" onfocusout="textInputActive = false;"/>
                         <button onclick="lineCharts['{{id}}'].setSelectedTagById('tag-name-{{id}}')">Set tag</button>
                     </div>
                     <button class="btn btn-outline-secondary btn-sm" onclick="lineCharts['{{id}}'].chart.resetZoom()">Reset Zoom</button>
@@ -202,8 +202,7 @@
             },
             t:  {
                 code: [84],
-                action: (chartId) => lineCharts[chartId].setSelectedTagById(`tag-name-${chartId}`),
-                ignore: false
+                action: (chartId) => lineCharts[chartId].setSelectedTagById(`tag-name-${chartId}`)
             },
             shift_z: {
                 code: [16, 90],
@@ -223,6 +222,7 @@
         let currentTotalTabIdx = 0;
         let existingtabs = savers[TABS_CONFIG_SESSION_KEY].load();
         let extraTabs = existingtabs ? JSON.parse(existingtabs) : [];
+        let textInputActive = false;
 
         document.getElementById('tab-0').innerHTML = graphTabTemplate.innerHTML.replaceAll('{{id}}', '0');
         document.querySelector('li.new-tab').children[0].addEventListener('click', clickHandler);
@@ -630,7 +630,7 @@
                 const keys_to_check = Object.values(KEYS_TO_VALIDATE);
                 const actionKeyIdx = keys_to_check.findIndex(k => k.code.includes(keyCode));
                 let performAction = false;
-                if (actionKeyIdx > -1 && !keys_to_check[actionKeyIdx].ignore && keys_to_check[actionKeyIdx].action != undefined) {
+                if (actionKeyIdx > -1 && !textInputActive && keys_to_check[actionKeyIdx].action != undefined) {
                     keys_to_check[actionKeyIdx].code.forEach(actKey => {
                         performAction = KEYS_ACTIVE.includes(actKey);
                         if (!performAction)
