@@ -246,7 +246,8 @@ class DfChartOptions {
                     name: ele_base_id,
                     type: lbl_type,
                     unit: TIME_UNITS[document.getElementById(`lbl-${ele_base_id}-unit-${id}`).value],
-                    text: document.getElementById(`lbl-${ele_base_id}-col-${id}`).value,
+                    key: document.getElementById(`lbl-${ele_base_id}-col-${id}`).value,
+                    text: document.getElementById(`lbl-${ele_base_id}-name-${id}`).value,
                     format: format,
                     formatInput: (v) => stringToDate(v.trim(), format).getTime(),
                     formatOutput: (v) => formatDate(new Date(v.trim()), format),
@@ -258,7 +259,8 @@ class DfChartOptions {
                 opts = {
                     name: ele_base_id,
                     type: lbl_type,
-                    text: document.getElementById(`lbl-${ele_base_id}-col-${id}`).value,
+                    key: document.getElementById(`lbl-${ele_base_id}-col-${id}`).value,
+                    text: document.getElementById(`lbl-${ele_base_id}-name-${id}`).value,
                     formatInput: (v) => isNaN(Number.parseFloat(v)) ? undefined : Number.parseFloat(v),
                     getMin: (vals) => Math.min.apply(null,vals),
                     getMax: (vals) => Math.max.apply(null,vals)
@@ -500,9 +502,9 @@ class DfChart {
             let bg_colors = []
             let bg_border_colors = []
             let data = data_loaded.find(v => v.id == options.file_id).data;
-            for (let i = 0; i < data.header[options.x_options.text].data.length; i++) {
-                const x = data.header[options.x_options.text].data[i];
-                const y = data.header[options.y_options.text].data[i];
+            for (let i = 0; i < data.header[options.x_options.key].data.length; i++) {
+                const x = data.header[options.x_options.key].data[i];
+                const y = data.header[options.y_options.key].data[i];
                 const tags = data.header[TAG_COL]?.data[i] !== undefined ? data.header[TAG_COL].data[i].split(';') : []; // options.w_tags
                 var val_x = options.x_options.formatInput(x);
                 var val_y = options.y_options.formatInput(y);

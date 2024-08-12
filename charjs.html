@@ -54,6 +54,10 @@
                                     </select>
                                 </div>
                                 <div class="ipt">
+                                    <label for="">Name</label>
+                                    <input type="text" id="lbl-x-name-{{id}}" />
+                                </div>
+                                <div class="ipt">
                                     <label for="">Example:</label>
                                     <div class="ipt-div ex-value"><span class="badge bg-light text-dark" id="example-value-x-{{id}}"></span></div>
                                 </div>
@@ -79,6 +83,10 @@
                                     <label for="">Column</label>
                                     <select id="lbl-y-col-{{id}}" onchange="onChangeColumnName('{{id}}', 'y', this.value)">
                                     </select>
+                                </div>
+                                <div class="ipt">
+                                    <label for="">Name</label>
+                                    <input type="text" id="lbl-y-name-{{id}}" />
                                 </div>
                                 <div class="ipt">
                                     <label for="">Example:</label>
@@ -147,6 +155,7 @@
                     <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="button" onclick="lineCharts['{{id}}'].toggleOption(OPTIONS_TYPE.ZOOM)">Toggle Zoom</button>
                     <button class="btn btn-outline-secondary btn-sm" onclick="confirmAction('Remove selected points?', () => lineCharts['{{id}}'].deleteSelectedChartData())">Delete Selected</button>
                     <button class="btn btn-outline-secondary btn-sm" onclick="lineCharts['{{id}}'].exportCSV()">Export</button>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="prepareGoBack('{{id}}')">Change Config</button>
                 </div>
             </div>
         </div>
@@ -404,6 +413,8 @@
         function loadColumnNames(id, data) {
             var ele_x = document.getElementById(`lbl-x-col-${id}`);
             var ele_y = document.getElementById(`lbl-y-col-${id}`);
+            var ele_name_x = document.getElementById(`lbl-x-name-${id}`);
+            var ele_name_y = document.getElementById(`lbl-y-name-${id}`);
 
             ele_x.innerHTML = '';
             ele_y.innerHTML = '';
@@ -418,6 +429,9 @@
             }
 
             if (keys.length > 0) {
+                ele_name_x.value = keys[0];
+                ele_name_y.value = keys[(keys.length > 1 ? 1 : 0)];
+
                 document.getElementById(`lbl-x-col-${id}`).value = keys[0];
                 document.getElementById(`lbl-y-col-${id}`).value = keys[(keys.length > 1 ? 1 : 0)];
                 onChangeColumnName(id, 'x', keys[0]);
@@ -461,6 +475,23 @@
             }
         }
 
+        function prepareGoBack(id) {
+            if (lineCharts[id].deletedData.findIndex(arr => arr.length > 0) > -1) {
+                confirmAction('Data changed will be lost, continue?', () => goBack(id))
+                return;
+            }
+
+            goBack(id);
+        }
+
+        function goBack(id) {
+            const loadOpts = document.querySelector(`#graph-${id}.dialog`);
+            loadOpts.classList.remove('not-visible');
+            let graphArea = document.querySelector(`#ga-${id}.graph-area`);
+            graphArea.classList.add('not-visible');
+            lineCharts[id].chart.destroy();
+        }
+
         function loadGraph(id) {
             let fileInput = document.querySelector(`#drop-area-${id} .ipt`);
             if (fileInput.files.length > 0) {
@@ -490,6 +521,7 @@
 
             document.getElementById(`lbl-${k}-type-${id}`).value = data_load.header[value].type;
             document.getElementById(`example-value-${k}-${id}`).innerText = valueToShow;
+            document.getElementById(`lbl-${k}-name-${id}`).value = value;
             onChangeType(id, k, data_load.header[value].type);
         }
 
