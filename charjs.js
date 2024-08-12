@@ -178,13 +178,15 @@ class DfChartOptions {
         x_options = this.X_OPTS_DEFAULT,
         y_options = this.Y_OPTS_DEFAULT,
         w_header = false,
-        file_id = undefined) {
+        file_id = undefined,
+        w_mid_line = false) {
         this.text = text;
         this.x_options = x_options;
         this.y_options = y_options;
         this.w_header = w_header;
         this.file_id = file_id;
         this.color = getRandomColor();
+        this.w_mid_line = w_mid_line;
     }
     
     loadFromSave(saveData) {
@@ -200,6 +202,7 @@ class DfChartOptions {
         this.y_options = this.loadLabelOptions(id, 'y');
         this.w_header = document.getElementById(`lbl-w-header-${id}`).checked;
         this.file_id = document.querySelector(`#drop-area-${id} .file-id`).value;
+        this.w_mid_line = document.getElementById(`lbl-w-mid-line-${id}`).checked;
     }
 
     returnForSave() {
@@ -245,7 +248,7 @@ class DfChartOptions {
                     unit: TIME_UNITS[document.getElementById(`lbl-${ele_base_id}-unit-${id}`).value],
                     text: document.getElementById(`lbl-${ele_base_id}-col-${id}`).value,
                     format: format,
-                    formatInput: (v) => formatDate(stringToDate(v.trim(), format), 'yyyy-MM-ddTHH:mm:ss.000Z'),
+                    formatInput: (v) => stringToDate(v.trim(), format).getTime(),
                     formatOutput: (v) => formatDate(new Date(v.trim()), format),
                     getMin: (vals) => Math.min.apply(null,new Date(vals)),
                     getMax: (vals) => Math.max.apply(null,new Date(vals))
@@ -514,6 +517,7 @@ class DfChart {
                 bg_colors.push(options.color);
                 bg_border_colors.push(options.color);
             }
+
             this.deletedData[dataSetIdx.toString()] = [];
             datasets.push({
                 label: options.text, // has to be dataset name
@@ -521,8 +525,36 @@ class DfChart {
                 backgroundColor: bg_colors,
                 borderColor: bg_border_colors,
                 borderWidth: 1,
-                showLine: true
+                showLine: false
             });
+
+            if (options.w_mid_line) {
+                const minX = Math.min(...dataset_data.map(point => point.x));
+                const maxX = Math.max(...dataset_data.map(point => point.x));
+                const maxY = Math.max(...dataset_data.map(point => point.y));
+    
+                const correlationLine = [{
+                    x: new Date(minX),
+                    y: 0
+                }, {
+                    x: maxY > maxX ? maxY : maxX,
+                    y: maxY > maxX ? maxY : maxX
+                }];
+                
+                datasets.push({
+                    label: options.text + ' Corr Line',
+                    data: correlationLine,
+                    type: 'line',
+                    borderColor: 'blue', // use variation of options.color
+                    backgroundColor: 'rgba(255, 0, 0, 0.1)',
+                    fill: false,
+                    pointRadius: 0,
+                    borderWidth: 2,
+                    showLine: true
+                });
+            }
+
+
             dataSetIdx++;
         }
         return datasets;

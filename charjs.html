@@ -40,6 +40,10 @@
                             <label for="">With header</label>
                             <input type="checkbox" id="lbl-w-header-{{id}}" checked />
                         </div>
+                        <div class="ipt">
+                            <label for="">With corr Line</label>
+                            <input type="checkbox" id="lbl-w-mid-line-{{id}}" />
+                        </div>
                         <hr>
                         <div class="row">
                             <div class="group-ipt col-6">
@@ -101,7 +105,7 @@
                         
                     </div>
                     <div class="btns">
-                        <button class="btn btn-secondary" onclick="clearForm('{{id}}')">Cancel</button>
+                        <!-- <button class="btn btn-secondary" onclick="clearForm('{{id}}')">Cancel</button> -->
                         <button class="btn btn-primary" onclick="addLabels('{{id}}')">Add</button>
                     </div>
                 </div>
@@ -307,32 +311,16 @@
 
             const dropArea = fileInput.parentElement;
             chrts_opts[id] = []
-            // chrts_opts[id] = {
-            //     options: [new DfChartOptions('tmp-'+id)],
-            //     id: 1
-            // };
             
             const SESSION_KEY = 'chart-opts-' + id;
             savers[id] = new Saver(SESSION_KEY);
             savers[TABS_CONFIG_SESSION_KEY] = new Saver(TABS_CONFIG_SESSION_KEY);
-            
-            // var data_opts = savers[id].load();
-            // if (data_opts) {
-            //     chrts_opts[id].options.loadFromSave(JSON.parse(data_opts));
-            //     loadForm(id);
-            // }
-
         }
-        
 
         function loadForm(id, options) {
             options.fillForm(id);
             onChangeType(id, 'x', document.getElementById(`lbl-x-type-${id}`).value);
             onChangeType(id, 'y', document.getElementById(`lbl-y-type-${id}`).value);
-        }
-
-        function clearForm(id) {
-            // loadForm(id, new DfChartOptions('tmp-'+ id));
         }
 
         function saveForm(id) {
@@ -363,9 +351,7 @@
                 txt_ele.setAttribute('data-coloris', '');
                 txt_ele.classList.add('color-pick');
                 txt_ele.value = opts.color;
-                // txt_ele.style.backgroundColor = txt_ele.value;
-                // txt_ele.style.color = 'transparent';
-                // txt_ele.style.cursor = 'pointer';
+                 
                 let btn_color_ele = document.createElement('button');
                 btn_color_ele.style.backgroundColor = txt_ele.value;
                 btn_color_ele.classList.add('btn-color-pick')
@@ -472,7 +458,6 @@
                 opts.loadFromForm(id);
                 chrts_opts[id].push(opts);
                 loadTable(id);
-                clearForm(id);
             }
         }
 
