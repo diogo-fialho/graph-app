@@ -221,14 +221,17 @@ table th {
     border: 0;
 }
 
-
-.alert {
+.alerts {
     position: fixed;
     z-index: 10;
     right: 32px;
     bottom: 16px;
+    display: flex;
+    flex-direction: column-reverse;
+}
+.alert {
+    transition: all 0.3s ease-in-out;
     transform: translateY(100px);
-    transition: transform 0.3s ease-in-out;
 }
 
 .alert.show {

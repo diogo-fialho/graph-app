@@ -638,25 +638,32 @@ class DfChart {
     }
 
     deleteSelectedChartData() {
+        let totalDeleted = 0; 
         for (let i = 0; i < this.chart.data.datasets.length; i++) {
             this.chart.data.datasets[i].data = this.chart.getDatasetMeta(i).data
                 .filter(p => this.PLUGINS[0].currentSelected[i.toString()]?.find(p2 => p2.$context.dataIndex == p.$context.dataIndex) === undefined)
                 .map(p => p.$context.raw);
 
-            this.deletedData[i.toString()].push(this.chart.getDatasetMeta(i).data
+            let deletedData = this.chart.getDatasetMeta(i).data
                 .filter(p => this.PLUGINS[0].currentSelected[i.toString()]?.find(p2 => p2.$context.dataIndex == p.$context.dataIndex) !== undefined)
-                .map((p) => ({ cont: p.$context.raw, id: p.$context.dataIndex})));
+                .map((p) => ({ cont: p.$context.raw, id: p.$context.dataIndex}));
+
+            this.deletedData[i.toString()].push(deletedData);
+            totalDeleted += deletedData.length;
+
             if (this.deletedData[i.toString()].length > this.deletedDataMaxLenght) {
                 this.deletedData[i.toString()].shift();
             }
         }
 
+        showFeedback(FEEDBACK_E.success, `${totalDeleted.Bold()} points deleted`);
         this.PLUGINS[0].currentSelected = {};
         this.chart.update();
     }    
 
     undo() {
         if (this.deletedData) {
+            let totalRestored = 0;
             var keys = Object.keys(this.deletedData);
             for (let i of keys) {
                 let lastData = this.deletedData[i].pop();
@@ -664,9 +671,12 @@ class DfChart {
                     for (let dt of lastData) {
                         this.chart.data.datasets[i].data.splice(dt.id, 0, dt.cont);
                     }
+
+                    totalRestored  += lastData.length;
                 }
             }
-
+            
+            showFeedback(FEEDBACK_E.success, `${totalRestored.Bold()} points restored`);
             this.chart.update();
         }
     }
@@ -689,6 +699,7 @@ class DfChart {
     }
 
     setSelectedTag(tagName) {
+        let totalTagged = 0;
         for (let i = 0; i < this.chart.data.datasets.length; i++) {
             this.chart.data.datasets[i].data = this.chart.getDatasetMeta(i).data
                 .map(p => {
@@ -698,11 +709,14 @@ class DfChart {
                         }
                         else if (!p.$context.raw.tags)
                             p.$context.raw.tags = [tagName];
+
+                        totalTagged++;
                     }
                     return p.$context.raw;
                 });
         }
             
+        showFeedback(FEEDBACK_E.success, `${totalTagged.Bold()} points set with tag ${tagName.Bold()}`);
 
         if (this.tagsList.findIndex(t => t == tagName) == -1)
             this.tagsList.push(tagName);
@@ -975,3 +989,12 @@ function stringToDate(inputStr, format)  {
 
     return date;
 }
+
+
+String.prototype.Bold = function Bold() {
+    return "<b>" + this + "</b>";
+};
+
+Number.prototype.Bold = function Bold() {
+    return this.toString().Bold();
+};

@@ -16,8 +16,7 @@
     <script src="https://cdn.jsdelivr.net/gh/mdbassit/Coloris@latest/dist/coloris.min.js"></script>
 </head>
 <body>
-    <div class="alert alert-dark" role="alert">
-        A simple primary alert—check it out!
+    <div id="alerts" class="alerts">
     </div>
     <div id="tab-graph-template" class="not-visible">
         <div id="graph-{{id}}" class="dialog">
@@ -217,6 +216,11 @@
             //     action: (chartId) => lineCharts[chartId].redo()
             // }
         };
+        const FEEDBACK_E = {
+            default: 'alert-dark',
+            success: 'alert-success',
+            error: 'alert-danger'
+        }
 
         let KEYS_ACTIVE = []
         var clickHandler = () => createNewTab();
@@ -231,6 +235,7 @@
         let existingtabs = savers[TABS_CONFIG_SESSION_KEY].load();
         let extraTabs = existingtabs ? JSON.parse(existingtabs) : [];
         let textInputActive = false;
+        let currentDestroyTimeout = undefined; 
 
         document.getElementById('tab-0').innerHTML = graphTabTemplate.innerHTML.replaceAll('{{id}}', '0');
         document.querySelector('li.new-tab').children[0].addEventListener('click', clickHandler);
@@ -241,7 +246,7 @@
             for (let tbId of extraTabs)
                 createNewTab(tbId)
         }
-
+        // general utils functions
         function confirmAction(message, action) {
             var act = confirm(message);
             if (act)
@@ -320,6 +325,30 @@
             savers[TABS_CONFIG_SESSION_KEY].save(JSON.stringify(extraTabs));
         }
 
+        function showFeedback(type, message) {
+            // type is equal to FEEDBACK_E value
+            const alertsEle = document.getElementById('alerts');
+
+            const divAlert = document.createElement('div');
+            divAlert.setAttribute('class', `alert ${type}`);
+            divAlert.setAttribute('role', 'alert');
+            divAlert.innerHTML = message;
+
+            alertsEle.appendChild(divAlert);
+
+            // setup timeouts to hide feedback and remove alerts content when stops showing
+            const totalTime = 4000;
+            const timeToDestroy = 300; // needs to be close to time in css transaction
+            setTimeout(() => divAlert.classList.add('show'), 1);
+            setTimeout(() => {
+                divAlert.classList.remove('show');
+                setTimeout(() => {
+                    divAlert.remove();
+                }, timeToDestroy);
+            }, totalTime - timeToDestroy);
+        }
+        
+        // graphs functions
         function start(id) {
             loadLabelTypes(id);
             loadUnits(id);
@@ -333,17 +362,6 @@
             const SESSION_KEY = 'chart-opts-' + id;
             savers[id] = new Saver(SESSION_KEY);
             savers[TABS_CONFIG_SESSION_KEY] = new Saver(TABS_CONFIG_SESSION_KEY);
-        }
-
-        function loadForm(id, options) {
-            options.fillForm(id);
-            onChangeType(id, 'x', document.getElementById(`lbl-x-type-${id}`).value);
-            onChangeType(id, 'y', document.getElementById(`lbl-y-type-${id}`).value);
-        }
-
-        function saveForm(id) {
-            chrts_opts[id].loadFromForm(id);
-            savers[id].save(JSON.stringify(chrts_opts[id].returnForSave()));
         }
 
         function removeOptions(id, key) {
@@ -476,12 +494,15 @@
 
         function addLabels(id) {
             let fileInput = document.querySelector(`#drop-area-${id} .ipt`);
-            if (fileInput.files.length > 0) {
-                var opts = new DfChartOptions('tmp-'+ id);
-                opts.loadFromForm(id);
-                chrts_opts[id].push(opts);
-                loadTable(id);
+            if (fileInput.files.length == 0) {
+                showFeedback(FEEDBACK_E.error, 'File is required');
+                return;
             }
+
+            var opts = new DfChartOptions('tmp-'+ id);
+            opts.loadFromForm(id);
+            chrts_opts[id].push(opts);
+            loadTable(id);
         }
 
         function prepareGoBack(id) {
@@ -503,20 +524,23 @@
 
         function loadGraph(id) {
             let fileInput = document.querySelector(`#drop-area-${id} .ipt`);
-            if (fileInput.files.length > 0) {
-                let dropArea = fileInput.parentElement;
-                if (dropArea.classList.contains('hovered'))
-                    dropArea.classList.remove('hovered');
-
-                const loadOpts = document.querySelector(`#graph-${id}.dialog`);
-                loadOpts.classList.add('not-visible');
-                let loading = document.querySelector(`#ga-${id}.graph-area`);
-                loading.classList.remove('not-visible');
-                    
-                var ctx = document.getElementById(`myLineChart-${id}`).getContext('2d');
-                lineCharts[id] = new DfChart(id, ctx, chrts_opts[id]);
-                lineCharts[id].load(data_loaded[id]);
+            if (chrts_opts[id].length == 0) {
+                showFeedback(FEEDBACK_E.error, 'At least one serie is required');
+                return;
             }
+
+            let dropArea = fileInput.parentElement;
+            if (dropArea.classList.contains('hovered'))
+                dropArea.classList.remove('hovered');
+
+            const loadOpts = document.querySelector(`#graph-${id}.dialog`);
+            loadOpts.classList.add('not-visible');
+            let loading = document.querySelector(`#ga-${id}.graph-area`);
+            loading.classList.remove('not-visible');
+                
+            var ctx = document.getElementById(`myLineChart-${id}`).getContext('2d');
+            lineCharts[id] = new DfChart(id, ctx, chrts_opts[id]);
+            lineCharts[id].load(data_loaded[id]);
         }
 
         function onChangeColumnName(id, k, value) {
