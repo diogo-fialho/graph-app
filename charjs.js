@@ -349,13 +349,24 @@ class DfBoxSelectPlugin {
                 this.lastCoord = [event.native.clientX - canvas_client_rect.left, event.native.clientY - canvas_client_rect.top, event.x, event.y];
                 this.ctx2.clearRect(0, 0, this.ctx2.canvas.width, this.ctx2.canvas.height);
                 this.ctx2.beginPath();
-                this.ctx2.strokeStyle = selectData ? this.options.colors.selectBoxColor : this.options.colors.zoomBoxColor;
-                this.ctx2.moveTo(this.startCoord[0], this.startCoord[1]);
-                this.ctx2.lineTo(this.lastCoord[0], this.startCoord[1]);
-                this.ctx2.lineTo(this.lastCoord[0], this.lastCoord[1]);
-                this.ctx2.moveTo(this.startCoord[0], this.startCoord[1]);
-                this.ctx2.lineTo(this.startCoord[0], this.lastCoord[1]);
-                this.ctx2.lineTo(this.lastCoord[0], this.lastCoord[1]);
+                const color = selectData ? this.options.colors.selectBoxColor : this.options.colors.zoomBoxColor;
+                this.ctx2.fillStyle = color.convertToRGBA(0.2);
+                this.ctx2.strokeStyle = color;
+
+                const minX = this.lastCoord[0] > this.startCoord[0] ? this.startCoord[0] : this.lastCoord[0];
+                const minY = this.lastCoord[1] > this.startCoord[1] ? this.startCoord[1] : this.lastCoord[1];
+                const width = this.lastCoord[0] > this.startCoord[0] ? this.lastCoord[0] - this.startCoord[0] : this.startCoord[0] - this.lastCoord[0];
+                const height = this.lastCoord[1] > this.startCoord[1] ? this.lastCoord[1] - this.startCoord[1] : this.startCoord[1] - this.lastCoord[1];
+                this.ctx2.fillRect(minX, minY, width, height);
+                this.ctx2.strokeRect(minX, minY, width, height);
+
+                // this.ctx2.strokeStyle = selectData ? this.options.colors.selectBoxColor : this.options.colors.zoomBoxColor;
+                // this.ctx2.moveTo(this.startCoord[0], this.startCoord[1]);
+                // this.ctx2.lineTo(this.lastCoord[0], this.startCoord[1]);
+                // this.ctx2.lineTo(this.lastCoord[0], this.lastCoord[1]);
+                // this.ctx2.moveTo(this.startCoord[0], this.startCoord[1]);
+                // this.ctx2.lineTo(this.startCoord[0], this.lastCoord[1]);
+                // this.ctx2.lineTo(this.lastCoord[0], this.lastCoord[1]);
                 this.ctx2.stroke();
             }
             else if (this.activeMouse && event.type == 'click') {
@@ -436,7 +447,7 @@ class DfBoxSelectPlugin {
                         point.options.originalBorderColor = point.options.borderColor;
                     }
                     point.options.backgroundColor = this.options.colors.pointSelectedBackgroundColor;   
-                    point.options.borderColor = this.options.colors.pointSelectedBorderColor;   
+                    point.options.borderColor = this.options.colors.pointSelectedBorderColor;
                 }
             }
     }
@@ -476,12 +487,10 @@ class DfChart {
 
     constructor(id, ctx, options_list = []) {
         this.colors = {
-            pointBackgroundColor: 'rgba(75, 192, 192, 0.2)',
-            pointSelectedBackgroundColor: 'red',
-            pointBorderColor: 'rgba(75, 192, 192, 1)',
-            pointSelectedBorderColor: 'red',
-            selectBoxColor: 'red',
-            zoomBoxColor: 'green'
+            pointSelectedBackgroundColor: '#D65A2F'.convertToRGBA(0.7),
+            pointSelectedBorderColor: '#D65A2F',
+            selectBoxColor: '#D65A2F',
+            zoomBoxColor: '#34D62F'
         };
         this.id = id;
         this.options_list = options_list;
@@ -519,7 +528,7 @@ class DfChart {
                     y: val_y,
                     tags: tags
                 });
-                bg_colors.push(options.color);
+                bg_colors.push(options.color.convertToRGBA(0.6));
                 bg_border_colors.push(options.color);
             }
 
@@ -534,12 +543,13 @@ class DfChart {
             });
 
             if (options.w_corr_line) {
-                const minX = Math.min(...dataset_data.map(point => point.x));
+                // const minX = Math.min(...dataset_data.map(point => point.x));
+                // const minY = Math.min(...dataset_data.map(point => point.y));
                 const maxX = Math.max(...dataset_data.map(point => point.x));
                 const maxY = Math.max(...dataset_data.map(point => point.y));
     
                 const correlationLine = [{
-                    x: new Date(minX),
+                    x: 0,
                     y: 0
                 }, {
                     x: maxY > maxX ? maxY : maxX,
@@ -1005,3 +1015,25 @@ String.prototype.Bold = function Bold() {
 Number.prototype.Bold = function Bold() {
     return this.toString().Bold();
 };
+
+String.prototype.convertToRGBList = function(){
+    // https://convertingcolors.com/blog/article/convert_hex_to_rgb_with_javascript.html
+    const val = this.startsWith('#') ? this.replace('#', '') : this;
+    var aRgbHex = val.match(/.{1,2}/g);
+    var aRgb = [
+        parseInt(aRgbHex[0], 16),
+        parseInt(aRgbHex[1], 16),
+        parseInt(aRgbHex[2], 16)
+    ];
+    return aRgb;
+}
+
+String.prototype.convertToRGB = function(){
+    const listRGB = this.convertToRGBList();
+    return `rgb(${listRGB.join(',')})`;
+}
+
+String.prototype.convertToRGBA = function(opacity = 1){
+    const listRGB = this.convertToRGBList();
+    return `rgba(${listRGB.join(',')}, ${opacity})`;
+}
