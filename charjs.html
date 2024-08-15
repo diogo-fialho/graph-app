@@ -661,7 +661,7 @@
             function keyAction(chartId, keyCode) {
                 const keys_to_check = Object.values(KEYS_TO_VALIDATE);
                 const actionKeyIdx = keys_to_check.findIndex(k => k.code.includes(keyCode));
-                let performAction = actionKeyIdx > -1 && !textInputActive && keys_to_check[actionKeyIdx].action != undefined;
+                let performAction = actionKeyIdx > -1 && !textInputActive && keys_to_check[actionKeyIdx].action != undefined && keys_to_check[actionKeyIdx].code.length == KEYS_ACTIVE.length;
                 if (performAction) {
                     keys_to_check[actionKeyIdx].code.forEach(actKey => {
                         const keyActive = KEYS_ACTIVE.includes(actKey);

@@ -534,7 +534,6 @@ class DfChart {
             });
 
             if (options.w_corr_line) {
-                debugger
                 const minX = Math.min(...dataset_data.map(point => point.x));
                 const maxX = Math.max(...dataset_data.map(point => point.x));
                 const maxY = Math.max(...dataset_data.map(point => point.y));
@@ -639,26 +638,30 @@ class DfChart {
 
     deleteSelectedChartData() {
         let totalDeleted = 0; 
-        for (let i = 0; i < this.chart.data.datasets.length; i++) {
-            this.chart.data.datasets[i].data = this.chart.getDatasetMeta(i).data
-                .filter(p => this.PLUGINS[0].currentSelected[i.toString()]?.find(p2 => p2.$context.dataIndex == p.$context.dataIndex) === undefined)
-                .map(p => p.$context.raw);
-
-            let deletedData = this.chart.getDatasetMeta(i).data
-                .filter(p => this.PLUGINS[0].currentSelected[i.toString()]?.find(p2 => p2.$context.dataIndex == p.$context.dataIndex) !== undefined)
-                .map((p) => ({ cont: p.$context.raw, id: p.$context.dataIndex}));
-
-            this.deletedData[i.toString()].push(deletedData);
-            totalDeleted += deletedData.length;
-
-            if (this.deletedData[i.toString()].length > this.deletedDataMaxLenght) {
-                this.deletedData[i.toString()].shift();
+        if (Object.keys(this.PLUGINS[0].currentSelected).length > 0) {
+            for (let i = 0; i < this.chart.data.datasets.length; i++) {
+                this.chart.data.datasets[i].data = this.chart.getDatasetMeta(i).data
+                    .filter(p => this.PLUGINS[0].currentSelected[i.toString()]?.find(p2 => p2.$context.dataIndex == p.$context.dataIndex) === undefined)
+                    .map(p => p.$context.raw);
+    
+                let deletedData = this.chart.getDatasetMeta(i).data
+                    .filter(p => this.PLUGINS[0].currentSelected[i.toString()]?.find(p2 => p2.$context.dataIndex == p.$context.dataIndex) !== undefined)
+                    .map((p) => ({ cont: p.$context.raw, id: p.$context.dataIndex}));
+    
+                this.deletedData[i.toString()].push(deletedData);
+                totalDeleted += deletedData.length;
+    
+                if (this.deletedData[i.toString()].length > this.deletedDataMaxLenght) {
+                    this.deletedData[i.toString()].shift();
+                }
             }
         }
 
-        showFeedback(FEEDBACK_E.success, `${totalDeleted.Bold()} points deleted`);
-        this.PLUGINS[0].currentSelected = {};
-        this.chart.update();
+        if (totalDeleted > 0) {
+            showFeedback(FEEDBACK_E.success, `${totalDeleted.Bold()} points deleted`);
+            this.PLUGINS[0].currentSelected = {};
+            this.chart.update();
+        }
     }    
 
     undo() {
@@ -675,9 +678,11 @@ class DfChart {
                     totalRestored  += lastData.length;
                 }
             }
-            
-            showFeedback(FEEDBACK_E.success, `${totalRestored.Bold()} points restored`);
-            this.chart.update();
+
+            if (totalRestored > 0) {
+                showFeedback(FEEDBACK_E.success, `${totalRestored.Bold()} points restored`);
+                this.chart.update();
+            }
         }
     }
     
@@ -700,29 +705,31 @@ class DfChart {
 
     setSelectedTag(tagName) {
         let totalTagged = 0;
-        for (let i = 0; i < this.chart.data.datasets.length; i++) {
-            this.chart.data.datasets[i].data = this.chart.getDatasetMeta(i).data
-                .map(p => {
-                    if (this.PLUGINS[0].currentSelected[i.toString()]?.find(p2 => p2.$context.dataIndex == p.$context.dataIndex) !== undefined) {
-                        if (p.$context.raw.tags && !p.$context.raw.tags.includes(tagName)) {
-                            p.$context.raw.tags.push(tagName);
+        if (Object.keys(this.PLUGINS[0].currentSelected).length > 0) {
+            for (let i = 0; i < this.chart.data.datasets.length; i++) {
+                this.chart.data.datasets[i].data = this.chart.getDatasetMeta(i).data
+                    .map(p => {
+                        if (this.PLUGINS[0].currentSelected[i.toString()]?.find(p2 => p2.$context.dataIndex == p.$context.dataIndex) !== undefined) {
+                            if (p.$context.raw.tags && !p.$context.raw.tags.includes(tagName)) {
+                                p.$context.raw.tags.push(tagName);
+                            }
+                            else if (!p.$context.raw.tags)
+                                p.$context.raw.tags = [tagName];
+
+                            totalTagged++;
                         }
-                        else if (!p.$context.raw.tags)
-                            p.$context.raw.tags = [tagName];
+                        return p.$context.raw;
+                    });
+            }
 
-                        totalTagged++;
-                    }
-                    return p.$context.raw;
-                });
-        }
+            showFeedback(FEEDBACK_E.success, `${totalTagged.Bold()} points set with tag ${tagName.Bold()}`);
             
-        showFeedback(FEEDBACK_E.success, `${totalTagged.Bold()} points set with tag ${tagName.Bold()}`);
-
-        if (this.tagsList.findIndex(t => t == tagName) == -1)
-            this.tagsList.push(tagName);
-    
-        this.updateTagBox();
-        this.chart.update();
+            if (this.tagsList.findIndex(t => t == tagName) == -1)
+                this.tagsList.push(tagName);
+        
+            this.updateTagBox();
+            this.chart.update();
+        }
     }
 
     removeTag(tagName) {
