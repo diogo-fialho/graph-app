@@ -252,7 +252,7 @@ class DfChartOptions {
                     key: document.getElementById(`lbl-${ele_base_id}-col-${id}`).value,
                     text: document.getElementById(`lbl-${ele_base_id}-name-${id}`).value,
                     format: format,
-                    formatInput: (v) => stringToDate(v.trim(), format).getTime(),
+                    formatInput: (v) => stringToDate(v.trim(), format)?.getTime(),
                     formatOutput: (v) => formatDate(new Date(v.trim()), format),
                     getMin: (vals) => Math.min.apply(null,new Date(vals)),
                     getMax: (vals) => Math.max.apply(null,new Date(vals))
