@@ -253,7 +253,7 @@ class DfChartOptions {
                     text: document.getElementById(`lbl-${ele_base_id}-name-${id}`).value,
                     format: format,
                     formatInput: (v) => stringToDate(v.trim(), format)?.getTime(),
-                    formatOutput: (v) => formatDate(new Date(v.trim()), format),
+                    formatOutput: (v) => formatDate(new Date(v), format),
                     getMin: (vals) => Math.min.apply(null,new Date(vals)),
                     getMax: (vals) => Math.max.apply(null,new Date(vals))
                 };//dd-MM-yyyy HH:mm
@@ -320,95 +320,92 @@ class DfBoxSelectPlugin {
         const is_blocked = KEYS_ACTIVE.includes(KEYS_TO_VALIDATE.ctrl.code[0]);
         if (!is_blocked) {
             // by default do zoom behaviour
-            const selectData = KEYS_ACTIVE.includes(KEYS_TO_VALIDATE.shift.code[0]);
-            if (!this.activeMouse && event.type == 'mousedown') {
-                let points_in_evt = chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true);
-    
-                // no points touched, start select box
-                if (points_in_evt.length == 0) {
-                    let canvas_client_rect = this.ctx2.canvas.getBoundingClientRect();
-                    this.startCoord = [event.native.clientX - canvas_client_rect.left, event.native.clientY - canvas_client_rect.top, event.x, event.y];
-                    this.activeMouse = true;
-                }
-                else {
-                    let idx = points_in_evt[0].datasetIndex.toString();
-                    if (!this.currentSelected[idx]) {
-                        this.currentSelected[idx] = []
-                    }
-                    
-                    let existing_idx = this.currentSelected[idx].findIndex(v => v.$context.dataIndex == points_in_evt[0].index);
-                    if (existing_idx == -1)
-                        this.currentSelected[idx].push(points_in_evt[0].element);
-                    else
-                        this.currentSelected[idx].splice(existing_idx, 1);
-    
-                }
-            }
-            else if (this.activeMouse && event.type == 'mousemove') {
-                let canvas_client_rect = this.ctx2.canvas.getBoundingClientRect();
-                this.lastCoord = [event.native.clientX - canvas_client_rect.left, event.native.clientY - canvas_client_rect.top, event.x, event.y];
-                this.ctx2.clearRect(0, 0, this.ctx2.canvas.width, this.ctx2.canvas.height);
-                this.ctx2.beginPath();
-                const color = selectData ? this.options.colors.selectBoxColor : this.options.colors.zoomBoxColor;
-                this.ctx2.fillStyle = color.convertToRGBA(0.2);
-                this.ctx2.strokeStyle = color;
-
-                const minX = this.lastCoord[0] > this.startCoord[0] ? this.startCoord[0] : this.lastCoord[0];
-                const minY = this.lastCoord[1] > this.startCoord[1] ? this.startCoord[1] : this.lastCoord[1];
-                const width = this.lastCoord[0] > this.startCoord[0] ? this.lastCoord[0] - this.startCoord[0] : this.startCoord[0] - this.lastCoord[0];
-                const height = this.lastCoord[1] > this.startCoord[1] ? this.lastCoord[1] - this.startCoord[1] : this.startCoord[1] - this.lastCoord[1];
-                this.ctx2.fillRect(minX, minY, width, height);
-                this.ctx2.strokeRect(minX, minY, width, height);
-
-                // this.ctx2.strokeStyle = selectData ? this.options.colors.selectBoxColor : this.options.colors.zoomBoxColor;
-                // this.ctx2.moveTo(this.startCoord[0], this.startCoord[1]);
-                // this.ctx2.lineTo(this.lastCoord[0], this.startCoord[1]);
-                // this.ctx2.lineTo(this.lastCoord[0], this.lastCoord[1]);
-                // this.ctx2.moveTo(this.startCoord[0], this.startCoord[1]);
-                // this.ctx2.lineTo(this.startCoord[0], this.lastCoord[1]);
-                // this.ctx2.lineTo(this.lastCoord[0], this.lastCoord[1]);
-                this.ctx2.stroke();
-            }
-            else if (this.activeMouse && event.type == 'click') {
-                this.activeMouse = false;
-                this.ctx2.clearRect(0, 0, this.ctx2.canvas.width, this.ctx2.canvas.height);
-                if (this.lastCoord) {
-                    if (selectData) {
-                        let data_se = [];
-                        for (let i = 0; i < chart.data.datasets.length; i++) {
-                            var c_dataset = chart.getDatasetMeta(i);
-                            data_se[i.toString()] = c_dataset.data.filter(p =>
-                                // atention, only works with circle for now, possibly
-                                p.x <= this.lastCoord[2] + p.options.radius && p.x >= this.startCoord[2] - p.options.radius &&
-                                p.y <= this.lastCoord[3] + p.options.radius && p.y >= this.startCoord[3] - p.options.radius
-                            );
-                        }
-                        
-                        this.lastSelected = data_se;
-                        this.updateLastSelected = true;
+            // only if left click
+            const leftClick = event.native.button == 0;
+            if (leftClick) {
+                const selectData = KEYS_ACTIVE.includes(KEYS_TO_VALIDATE.shift.code[0]);
+                if (!this.activeMouse && event.type == 'mousedown') {
+                    let points_in_evt = chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true);
+        
+                    // no points touched, start select box
+                    if (points_in_evt.length == 0) {
+                        let canvas_client_rect = this.ctx2.canvas.getBoundingClientRect();
+                        this.startCoord = [event.native.clientX - canvas_client_rect.left, event.native.clientY - canvas_client_rect.top, event.x, event.y];
+                        this.activeMouse = true;
                     }
                     else {
-                        var xScale = chart.scales.x;
-                        var yScale = chart.scales.y;
-    
-                        var startXValue = xScale.getValueForPixel(this.startCoord[0]);
-                        var lastXValue = xScale.getValueForPixel(this.lastCoord[0]);
-                        var startYValue = yScale.getValueForPixel(this.startCoord[1]);
-                        var lastYValue = yScale.getValueForPixel(this.lastCoord[1]);
-                        var newXMin = startXValue < lastXValue ? startXValue : lastXValue;
-                        var newXMax = startXValue < lastXValue ? lastXValue : startXValue;
-                        var newYMin = startYValue < lastYValue ? startYValue : lastYValue;
-                        var newYMax = startYValue < lastYValue ? lastYValue : startYValue;
-                        // Use the zoom function to zoom into the new range
-                        chart.zoomScale('x', { min: newXMin, max: newXMax });
-                        chart.zoomScale('y', { min: newYMin, max: newYMax });
+                        let idx = points_in_evt[0].datasetIndex.toString();
+                        if (!this.currentSelected[idx]) {
+                            this.currentSelected[idx] = []
+                        }
+                        
+                        let existing_idx = this.currentSelected[idx].findIndex(v => v.$context.dataIndex == points_in_evt[0].index);
+                        if (existing_idx == -1)
+                            this.currentSelected[idx].push(points_in_evt[0].element);
+                        else
+                            this.currentSelected[idx].splice(existing_idx, 1);
+        
                     }
                 }
-                    
-                this.startCoord = undefined;
-                this.lastCoord = undefined;
-                chart.render();
+                else if (this.activeMouse && event.type == 'mousemove') {
+                    let canvas_client_rect = this.ctx2.canvas.getBoundingClientRect();
+                    this.lastCoord = [event.native.clientX - canvas_client_rect.left, event.native.clientY - canvas_client_rect.top, event.x, event.y];
+                    this.ctx2.clearRect(0, 0, this.ctx2.canvas.width, this.ctx2.canvas.height);
+                    this.ctx2.beginPath();
+                    const color = selectData ? this.options.colors.selectBoxColor : this.options.colors.zoomBoxColor;
+                    this.ctx2.fillStyle = color.convertToRGBA(0.2);
+                    this.ctx2.strokeStyle = color;
+    
+                    const minX = this.lastCoord[0] > this.startCoord[0] ? this.startCoord[0] : this.lastCoord[0];
+                    const minY = this.lastCoord[1] > this.startCoord[1] ? this.startCoord[1] : this.lastCoord[1];
+                    const width = this.lastCoord[0] > this.startCoord[0] ? this.lastCoord[0] - this.startCoord[0] : this.startCoord[0] - this.lastCoord[0];
+                    const height = this.lastCoord[1] > this.startCoord[1] ? this.lastCoord[1] - this.startCoord[1] : this.startCoord[1] - this.lastCoord[1];
+                    this.ctx2.fillRect(minX, minY, width, height);
+                    this.ctx2.strokeRect(minX, minY, width, height);
+                    this.ctx2.stroke();
+                }
+                else if (this.activeMouse && event.type == 'click') {
+                    this.activeMouse = false;
+                    this.ctx2.clearRect(0, 0, this.ctx2.canvas.width, this.ctx2.canvas.height);
+                    if (this.lastCoord) {
+                        if (selectData) {
+                            let data_se = [];
+                            for (let i = 0; i < chart.data.datasets.length; i++) {
+                                var c_dataset = chart.getDatasetMeta(i);
+                                data_se[i.toString()] = c_dataset.data.filter(p =>
+                                    // atention, only works with circle for now, possibly
+                                    p.x <= this.lastCoord[2] + p.options.radius && p.x >= this.startCoord[2] - p.options.radius &&
+                                    p.y <= this.lastCoord[3] + p.options.radius && p.y >= this.startCoord[3] - p.options.radius
+                                );
+                            }
+                            
+                            this.lastSelected = data_se;
+                            this.updateLastSelected = true;
+                        }
+                        else {
+                            var xScale = chart.scales.x;
+                            var yScale = chart.scales.y;
+        
+                            var startXValue = xScale.getValueForPixel(this.startCoord[0]);
+                            var lastXValue = xScale.getValueForPixel(this.lastCoord[0]);
+                            var startYValue = yScale.getValueForPixel(this.startCoord[1]);
+                            var lastYValue = yScale.getValueForPixel(this.lastCoord[1]);
+                            var newXMin = startXValue < lastXValue ? startXValue : lastXValue;
+                            var newXMax = startXValue < lastXValue ? lastXValue : startXValue;
+                            var newYMin = startYValue < lastYValue ? startYValue : lastYValue;
+                            var newYMax = startYValue < lastYValue ? lastYValue : startYValue;
+                            // Use the zoom function to zoom into the new range
+                            chart.zoomScale('x', { min: newXMin, max: newXMax });
+                            chart.zoomScale('y', { min: newYMin, max: newYMax });
+                        }
+                    }
+                        
+                    this.startCoord = undefined;
+                    this.lastCoord = undefined;
+                    chart.render();
+                }
             }
+            
         }
     }
 
@@ -485,7 +482,7 @@ class DfChart {
 
     PLUGINS = []
 
-    constructor(id, ctx, options_list = []) {
+    constructor(id, ctx, options_list = [], ctxMenu = undefined) {
         this.colors = {
             pointSelectedBackgroundColor: '#D65A2F'.convertToRGBA(0.7),
             pointSelectedBorderColor: '#D65A2F',
@@ -503,7 +500,7 @@ class DfChart {
         this.tags_ui_box = document.getElementById(`tags-box-${id}`);
         this.deletedDataMaxLenght = 5;
         this.deletedData = [];
-        // this.last_datasets = undefined;
+        this.ctxMenu = Object.assign({}, ctxMenu);
     }
 
     loadDatasets(data_loaded) {
@@ -576,6 +573,9 @@ class DfChart {
     }
 
     load(data_loaded) {
+        if (this.ctxMenu)
+            loadContextMenu(this.id, this.ctxMenu);
+        
         this.chart = new Chart(this.ctx, {
             type: 'line',
             // improve this

@@ -237,3 +237,15 @@ table th {
 .alert.show {
     transform: translateY(0px);
 }
+
+.context-menu {
+    position: fixed;
+    border: 1px solid gray;
+    z-index: 10;
+    background-color: white;
+}
+
+.context-menu .nav-link:hover {
+    background-color: rgba(211, 211, 211, .3);
+    cursor: pointer;
+}

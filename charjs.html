@@ -143,6 +143,14 @@
             </div>
         </div>
         <div id="ga-{{id}}" class="graph-area not-visible">
+            <div id="cm-{{id}}" class="context-menu not-visible">
+                <nav class="nav flex-column">
+                    <a class="nav-link active" href="#"onclick="prepareGoBack('{{id}}')">Change Config</a>
+                    <a class="nav-link text-danger" onclick="confirmAction('Remove selected points?', () => lineCharts['{{id}}'].deleteSelectedChartData())" href="#">Delete</a>
+                    <a class="nav-link" href="#" onclick="lineCharts['{{id}}'].exportCSV()">Export</a>
+                    <!-- <a class="nav-link disabled" href="#">Disabled</a> -->
+                </nav>
+            </div>
             <canvas id="myLineChart-{{id}}" width="400" height="200"></canvas>
             <canvas id="layer-2-{{id}}" class="layer-2" width="1460" height="730"></canvas>
             <div class="menus">
@@ -151,14 +159,14 @@
                 </div>
                 <div class="btns">
                     <div class="tag-search">
-                        <input type="text" id="tag-name-{{id}}" onfocusin="textInputActive = true;" onfocusout="textInputActive = false;"/>
+                        <input type="text" id="tag-name-{{id}}" onchange="onTagChange('{{id}}', this.value)" onfocusin="textInputActive = true;" onfocusout="textInputActive = false;"/>
                         <button onclick="lineCharts['{{id}}'].setSelectedTagById('tag-name-{{id}}')">Set tag</button>
                     </div>
                     <button class="btn btn-outline-secondary btn-sm" onclick="lineCharts['{{id}}'].chart.resetZoom()">Reset Zoom</button>
                     <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="button" onclick="lineCharts['{{id}}'].toggleOption(OPTIONS_TYPE.ZOOM)">Toggle Zoom</button>
-                    <button class="btn btn-outline-secondary btn-sm" onclick="confirmAction('Remove selected points?', () => lineCharts['{{id}}'].deleteSelectedChartData())">Delete Selected</button>
+                    <!-- <button class="btn btn-outline-secondary btn-sm" onclick="confirmAction('Remove selected points?', () => lineCharts['{{id}}'].deleteSelectedChartData())">Delete Selected</button>
                     <button class="btn btn-outline-secondary btn-sm" onclick="lineCharts['{{id}}'].exportCSV()">Export</button>
-                    <button class="btn btn-outline-secondary btn-sm" onclick="prepareGoBack('{{id}}')">Change Config</button>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="prepareGoBack('{{id}}')">Change Config</button> -->
                 </div>
             </div>
         </div>
@@ -186,6 +194,29 @@
         const ulTabsElement = document.getElementById('myTab');
         const tabsContents = document.getElementById('myTabContent');
         const graphTabTemplate = document.getElementById('tab-graph-template');
+        const CONTEXT_MENU = {
+            TAG: {
+                text: 'Tag: ',
+                visible: false,
+                action: (id) => lineCharts[id].setSelectedTagById(`tag-name-${id}`)
+            },
+            DELETE: {
+                text: 'Delete',
+                visible: true,
+                class: 'text-danger',
+                action: (id) => confirmAction('Remove selected points?', () => lineCharts[id].deleteSelectedChartData())
+            },
+            EXPORT: {
+                text: 'Export',
+                visible: true,
+                action: (id) => lineCharts[id].exportCSV()
+            },
+            CHANGE_CONFIG: {
+                text: 'Change Config',
+                visible: true,
+                action: (id) => prepareGoBack(id)
+            },
+        };
         const KEYS_TO_VALIDATE = {
             ctrl: {
                 code: [17],
@@ -537,9 +568,16 @@
             loadOpts.classList.add('not-visible');
             let loading = document.querySelector(`#ga-${id}.graph-area`);
             loading.classList.remove('not-visible');
-                
+
+            if (!lineCharts[id]) {
+                loading.addEventListener("contextmenu", (event) => {
+                    toggleContextMenu(event, id);
+                    event.preventDefault();
+                });
+            }
+
             var ctx = document.getElementById(`myLineChart-${id}`).getContext('2d');
-            lineCharts[id] = new DfChart(id, ctx, chrts_opts[id]);
+            lineCharts[id] = new DfChart(id, ctx, chrts_opts[id], CONTEXT_MENU);
             lineCharts[id].load(data_loaded[id]);
         }
 
@@ -570,6 +608,16 @@
                     div_format.classList.add('not-visible');
                     div_unit.classList.add('not-visible');
                 }
+            }
+        }
+
+        function onTagChange(id, value) {
+            if (lineCharts[id].ctxMenu?.TAG) {
+                lineCharts[id].ctxMenu.TAG.visible = /\S/.test(value);
+                if (lineCharts[id].ctxMenu.TAG.visible)
+                    lineCharts[id].ctxMenu.TAG.text = `Set tag "${value}"`;
+
+                loadContextMenu(id, lineCharts[id].ctxMenu);
             }
         }
 
@@ -634,7 +682,40 @@
             }
             // FILE LOGIC
         }
-        
+
+        function toggleContextMenu(event, id = undefined) {
+            const menuEle = !id ? document.querySelector('.context-menu:not(.not-visible)') : document.querySelector(`#cm-${id}`);
+            if (menuEle) {
+                if (!menuEle.classList.contains('not-visible'))
+                    menuEle.classList.add('not-visible')
+                else
+                    menuEle.classList.remove('not-visible')
+
+                // check overflow window
+                const diffX = event.clientX + menuEle.clientWidth > window.innerWidth ? menuEle.clientWidth : 0;
+                const diffY = event.clientY + menuEle.clientHeight > window.innerHeight ? menuEle.clientHeight : 0;
+                menuEle.style.left = (event.clientX - diffX)  + 'px';
+                menuEle.style.top = (event.clientY - diffY) + 'px';
+            }
+        }
+
+        // options is equivalent to CONTEXT_MENU
+        function loadContextMenu(id, options) {
+            const menuNavEle = document.querySelector(`#cm-${id} nav`);
+            const keys = Object.keys(options);
+            menuNavEle.innerHTML = '';
+            for (let key of keys.filter(v => options[v].visible)) {
+                let aMenu = options[key];
+                let aEle = document.createElement('a');
+                aEle.setAttribute('class', 'nav-link ' + aMenu.class);
+                aEle.innerText = aMenu.text;
+                aEle.addEventListener('click', () => {
+                    aMenu.action(id);
+                });
+                menuNavEle.appendChild(aEle);
+            }
+        }
+
         function loadCustomListeners() {
             // add custom listeners
             document.addEventListener('keydown', (e) => {
@@ -656,6 +737,15 @@
                         KEYS_ACTIVE = KEYS_ACTIVE.filter(v => v != e.which);
                     }
                 }
+            });
+
+            // document.addEventListener("contextmenu", (event) => {
+            //     toggleContextMenu(event);
+            //     event.preventDefault();
+            // });
+
+            document.addEventListener("click", (event) => {
+                toggleContextMenu(event);
             });
 
             function keyAction(chartId, keyCode) {
