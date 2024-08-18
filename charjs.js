@@ -702,6 +702,12 @@ class DfChart {
             if (dataset) {
                 for (let point of dataset.data) {
                     let filterResult = true;
+                    if (point.$context.raw.oldX)
+                        point.$context.raw.x = point.$context.raw.oldX;
+    
+                    if (point.$context.raw.oldY)
+                        point.$context.raw.y = point.$context.raw.oldY;
+
                     for (let filter of filters)
                         filterResult &= filter.action(point, point.$context.raw, filter.value);
     
@@ -710,13 +716,6 @@ class DfChart {
                         point.$context.raw.oldY = point.$context.raw.y;
                         point.$context.raw.x = null;
                         point.$context.raw.y = null;
-                    }
-                    else {
-                        if (point.$context.raw.oldX)
-                            point.$context.raw.x = point.$context.raw.oldX;
-        
-                        if (point.$context.raw.oldY)
-                            point.$context.raw.y = point.$context.raw.oldY;
                     }
                 }
     

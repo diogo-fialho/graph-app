@@ -232,7 +232,16 @@
             APPLY_FILTER: {
                 text: 'Test Filter',
                 visible: true,
-                action: (id) => lineCharts[id].applyFilters([0], mapFilterWithStringFunc(TEST_FILTERS))
+                subMenus: [{
+                    text: TEST_FILTERS[0].name,
+                    visible: true,
+                    action: (id) => lineCharts[id].applyFilters([0], mapFilterWithStringFunc([TEST_FILTERS[0]])) 
+                },
+                {
+                    text: TEST_FILTERS[1].name,
+                    visible: true,
+                    action: (id) => lineCharts[id].applyFilters([0], mapFilterWithStringFunc([TEST_FILTERS[1]])) 
+                }]
             },
             REMOVE_FILTER: {
                 text: 'Remove Filter',
@@ -707,7 +716,17 @@
         }
 
         function toggleContextMenu(event, id = undefined) {
-            const menuEle = !id ? document.querySelector('.context-menu:not(.not-visible)') : document.querySelector(`#cm-${id}`);
+            const selector = !id ? '.context-menu:not(.not-visible)' : `#cm-${id}`;
+            toggleContextMenu2(selector, event.clientX, event.clientY, id);
+            
+            // move this to more standard way when using multiple submenus
+            let subMenu = document.querySelector('nav.sub-menu:not(.not-visible)');
+            if (subMenu)
+                subMenu.classList.add('not-visible')
+        }
+
+        function toggleContextMenu2(selector, baseX, baseY, id = undefined, baseWidth = undefined) {
+            const menuEle = document.querySelector(selector);
             if (menuEle) {
                 if (!menuEle.classList.contains('not-visible'))
                     menuEle.classList.add('not-visible')
@@ -715,25 +734,60 @@
                     menuEle.classList.remove('not-visible')
 
                 // check overflow window
-                const diffX = event.clientX + menuEle.clientWidth > window.innerWidth ? menuEle.clientWidth : 0;
-                const diffY = event.clientY + menuEle.clientHeight > window.innerHeight ? menuEle.clientHeight : 0;
-                menuEle.style.left = (event.clientX - diffX)  + 'px';
-                menuEle.style.top = (event.clientY - diffY) + 'px';
+                const diffX = baseX + menuEle.clientWidth > window.innerWidth ? (baseWidth ?? menuEle.clientWidth) : 0;
+                const diffY = baseY + menuEle.clientHeight > window.innerHeight ? menuEle.clientHeight : 0;
+                menuEle.style.left = (baseX - diffX)  + 'px';
+                menuEle.style.top = (baseY - diffY) + 'px';
             }
         }
 
         // options is equivalent to CONTEXT_MENU
         function loadContextMenu(id, options) {
             const menuNavEle = document.querySelector(`#cm-${id} nav`);
+            const menuEle = menuNavEle.parentElement;
             const keys = Object.keys(options);
             menuNavEle.innerHTML = '';
             for (let key of keys.filter(v => options[v].visible)) {
                 let aMenu = options[key];
                 let aEle = document.createElement('a');
-                aEle.setAttribute('class', 'nav-link ' + aMenu.class);
+                aEle.setAttribute('class', 'nav-link ' + (!aMenu.class ? '' : aMenu.class));
                 aEle.innerText = aMenu.text;
-                aEle.addEventListener('click', () => {
-                    aMenu.action(id);
+                if (aMenu.subMenus)
+                    aEle.classList.add('w-sub');
+                aEle.addEventListener('click', (event) => {
+                    if (aMenu.action)
+                        aMenu.action(id);
+                    else if (aMenu.subMenus) {
+                        let subMenuNav = menuEle.querySelector('nav.sub-menu');
+                        if (!subMenuNav) {
+                            subMenuNav = document.createElement('nav');
+                            subMenuNav.setAttribute('class', 'nav flex-column sub-menu not-visible');
+                            menuEle.appendChild(subMenuNav);
+                        }
+
+                        const subKeys = Object.keys(aMenu.subMenus);
+                        subMenuNav.innerHTML = '';
+                        for (let subkey of subKeys.filter(v => aMenu.subMenus[v].visible)) {
+                            let subAMenu = aMenu.subMenus[subkey];
+                            let aEle = document.createElement('a');
+                            aEle.setAttribute('class', 'nav-link ' + (!subAMenu.class ? '' : subAMenu.class));
+                            aEle.innerText = subAMenu.text;
+                            aEle.addEventListener('click', () => {
+                                if (subAMenu.action)
+                                    subAMenu.action(id);
+                            });
+                            subMenuNav.appendChild(aEle);
+                        }
+
+                        toggleContextMenu2('nav.sub-menu', event.target.getBoundingClientRect().left + menuEle.clientWidth, event.target.getBoundingClientRect().top, id, menuEle.clientWidth * 2); // 2 is the number of submenus existing
+                        if (subMenuNav.classList.contains('not-visible'))
+                            event.target.classList.remove('m-active');
+                        else
+                            event.target.classList.add('m-active');
+                        
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
                 });
                 menuNavEle.appendChild(aEle);
             }

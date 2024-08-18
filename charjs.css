@@ -240,9 +240,28 @@ table th {
 
 .context-menu {
     position: fixed;
-    border: 1px solid gray;
     z-index: 10;
+}
+
+.context-menu nav {
     background-color: white;
+    border: 1px solid gray;
+    width: 150px;
+}
+
+.context-menu nav.sub-menu {
+    position: fixed;
+}
+
+.context-menu .nav-link.w-sub::after {
+    content: '>';
+    position: absolute;
+    right: 8px;
+    transition: transform 0.3s ease-in-out;
+}
+
+.context-menu .nav-link.w-sub.m-active::after {
+    transform: rotateY(180deg);
 }
 
 .context-menu .nav-link:hover {
