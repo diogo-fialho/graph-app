@@ -19,7 +19,8 @@
     <div id="alerts" class="alerts">
     </div>
     <div class="filter-box">
-        <button class="btn btn-primary" >Add filter</button>
+        <button class="btn btn-primary" onclick="LIST_OF_FILTERS.push(loadContentToFilter()); loadFiltersContents([{datasetIdx: 0, name: 'dt1' }], LIST_OF_FILTERS);" >Add filter</button>
+        <button class="btn btn-primary" onclick="savers.FILTERS.save(JSON.stringify(LIST_OF_FILTERS.filter(f => !f.native)))" >Save Filters</button>
         <div class="filter-content">
             <div class="row">
                 <div class="col">
@@ -224,33 +225,43 @@
             themeMode: 'dark'
         });
         const TABS_CONFIG_SESSION_KEY = 'TABS_OPTS';
+        const FILTERS_SESSION_KEY = 'FILTERS';
         const ulTabsElement = document.getElementById('myTab');
         const tabsContents = document.getElementById('myTabContent');
         const graphTabTemplate = document.getElementById('tab-graph-template');
-        const NATIVE_FILTERS = [
+        const FILTER_BASE_FUNC = '(point, pointRaw, value) => ';
+        const savers = {
+            TABS_OPTS: new Saver(TABS_CONFIG_SESSION_KEY),
+            FILTERS: new Saver(FILTERS_SESSION_KEY)
+        };
+        const LIST_OF_FILTERS = [
+            // native
             {
                 name: 'Y Greater than 0',
                 value: 0,
-                stringFunc: 'pointRaw.y > value'
+                stringFunc: 'pointRaw.y > value',
+                native: true
             },
             {
                 name: 'X Greater than 0',
                 value: 0,
-                stringFunc: 'pointRaw.x > value'
+                stringFunc: 'pointRaw.x > value',
+                native: true
             },
             {
                 name: 'Y Less than 0',
                 value: 0,
-                stringFunc: 'pointRaw.y < value'
+                stringFunc: 'pointRaw.y < value',
+                native: true
             },
             {
                 name: 'X Less than 0',
                 value: 0,
-                stringFunc: 'pointRaw.x < value'
+                stringFunc: 'pointRaw.x < value',
+                native: true
             }
-        ]
-        const ALL_ACTIVE_FILTERS = []
-        const FILTER_BASE_FUNC = '(point, pointRaw, value) => ';
+            //
+        ].concat(JSON.parse(savers.FILTERS.load()) ?? []);
         const CONTEXT_MENU = {
             TAG: {
                 text: 'Tag: ',
@@ -282,7 +293,7 @@
                         class: 'top-a'
                         // action: TODO: open filters content menu
                     }].concat(
-                    NATIVE_FILTERS.map(f => {
+                    LIST_OF_FILTERS.map(f => {
                         return {
                             text: f.name,
                             visible: true,
@@ -332,9 +343,6 @@
         var clickHandler = () => createNewTab();
 
         let chrts_opts = {};
-        let savers = {
-            TABS_OPTS: new Saver(TABS_CONFIG_SESSION_KEY)
-        };
         let data_loaded = {};
         let lineCharts = {};
         let currentTotalTabIdx = 0;
@@ -346,7 +354,7 @@
         document.getElementById('tab-0').innerHTML = graphTabTemplate.innerHTML.replaceAll('{{id}}', '0');
         document.querySelector('li.new-tab').children[0].addEventListener('click', clickHandler);
         loadCustomListeners();
-        loadFiltersContents([{datasetIdx: 0, name: 'dt1' }], NATIVE_FILTERS);
+        loadFiltersContents([{datasetIdx: 0, name: 'dt1' }], LIST_OF_FILTERS);
         
         start(currentTotalTabIdx);
         if (extraTabs.length > 0) {
@@ -873,6 +881,15 @@
             });
         }
 
+        function loadContentToFilter(filterOptions) {
+            const formEle = document.querySelector('.filter-content');
+            return {
+                name: formEle.querySelector('input[name="filter-name"]').value,
+                value: formEle.querySelector('input[name="filter-value"]').value,
+                stringFunc: formEle.querySelector('textarea[name="filter-script-content"]').value
+            };
+        }
+
         function showContent(filterOptions) {
             const formEle = document.querySelector('.filter-content');
             const nameInput = formEle.querySelector('input[name="filter-name"]');
@@ -880,7 +897,7 @@
             const scriptFuncContent = formEle.querySelector('textarea[name="filter-script-content"]');
             nameInput.value = filterOptions.name;
             valueInput.value = filterOptions.value;
-            scriptFuncContent.innerText = filterOptions.stringFunc;
+            scriptFuncContent.value = filterOptions.stringFunc;
         }
 
         // datasets should be list of obj { datasetIdx, name }
