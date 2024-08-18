@@ -194,6 +194,19 @@
         const ulTabsElement = document.getElementById('myTab');
         const tabsContents = document.getElementById('myTabContent');
         const graphTabTemplate = document.getElementById('tab-graph-template');
+        const TEST_FILTERS = [
+            {
+                name: 'Filter 1',
+                value: 4,
+                stringFunc: '{ return pointRaw.y > value }'
+            },
+            {
+                name: 'Filter 2',
+                value: "2022-01-14 23:00:00",
+                stringFunc: 'pointRaw.x < new Date(value).getTime()'
+            }
+        ]
+        const FILTER_BASE_FUNC = '(point, pointRaw, value) => ';
         const CONTEXT_MENU = {
             TAG: {
                 text: 'Tag: ',
@@ -215,6 +228,16 @@
                 text: 'Change Config',
                 visible: true,
                 action: (id) => prepareGoBack(id)
+            },
+            APPLY_FILTER: {
+                text: 'Test Filter',
+                visible: true,
+                action: (id) => lineCharts[id].applyFilters([0], mapFilterWithStringFunc(TEST_FILTERS))
+            },
+            REMOVE_FILTER: {
+                text: 'Remove Filter',
+                visible: true,
+                action: (id) => lineCharts[id].applyFilters([0], [])
             },
         };
         const KEYS_TO_VALIDATE = {
@@ -714,6 +737,13 @@
                 });
                 menuNavEle.appendChild(aEle);
             }
+        }
+
+        function mapFilterWithStringFunc(filters) {
+            return filters.map(f => {
+                f.action = eval(`${FILTER_BASE_FUNC} ${f.stringFunc}`);
+                return f;
+            });
         }
 
         function loadCustomListeners() {

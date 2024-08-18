@@ -696,6 +696,42 @@ class DfChart {
         }
     }
     
+    applyFilters(datasetIdxs, filters) {
+        for (let dtIdx of datasetIdxs) {
+            var dataset = this.chart.getDatasetMeta(dtIdx);
+            if (dataset) {
+                for (let point of dataset.data) {
+                    let filterResult = true;
+                    for (let filter of filters)
+                        filterResult &= filter.action(point, point.$context.raw, filter.value);
+    
+                    if (!filterResult) {
+                        point.$context.raw.oldX = point.$context.raw.x;
+                        point.$context.raw.oldY = point.$context.raw.y;
+                        point.$context.raw.x = null;
+                        point.$context.raw.y = null;
+                    }
+                    else {
+                        if (point.$context.raw.oldX)
+                            point.$context.raw.x = point.$context.raw.oldX;
+        
+                        if (point.$context.raw.oldY)
+                            point.$context.raw.y = point.$context.raw.oldY;
+                    }
+                }
+    
+            }
+        }
+
+        this.chart.options.scales.x.min = this.chart.scales['x'].min;
+        this.chart.options.scales.x.max = this.chart.scales['x'].max;
+
+        this.chart.options.scales.y.min = this.chart.scales['y'].min;
+        this.chart.options.scales.y.max = this.chart.scales['y'].max;
+        this.chart.update();
+    }
+    
+    
     selectTag(tagName) {
         var last_se = [];
         for (let i = 0; i < this.chart.data.datasets.length; i++) {
