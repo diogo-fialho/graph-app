@@ -246,7 +246,14 @@ table th {
 .context-menu nav {
     background-color: white;
     border: 1px solid gray;
-    width: 150px;
+    min-width: 150px;
+    /* max-height: 100px;
+    transition: max-height 1s ease-out;
+    flex-direction: column;
+    white-space: nowrap;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: repeat(1, 1fr); */
 }
 
 .context-menu nav.sub-menu {
@@ -264,7 +271,54 @@ table th {
     transform: rotateY(180deg);
 }
 
-.context-menu .nav-link:hover {
+.context-menu .nav-link.top-a {
+    border-bottom: 2px solid;
+}
+
+.context-menu .mult-a {
+    display: flex;
+    gap: 5px;
+}
+
+.context-menu .mult-active {
+    background-color: rgba(211, 211, 211, .3);
+}
+
+.context-menu .nav-link:not(.mult-active):hover {
     background-color: rgba(211, 211, 211, .3);
     cursor: pointer;
+}
+
+.context-menu .nav-link.mult-active:hover {
+    background-color: rgba(211, 211, 211, .5);
+    cursor: pointer;
+}
+
+.filter-box {
+    position: fixed;
+    width: 400px;
+    height: 400px;
+    background: white;
+    left: 50%;
+    top: 50px;
+    transform: translateX(-50%);
+    z-index: 10;
+}
+
+.filter-dataset  {
+    display: flex;
+}
+
+.filter-dataset .filter-b-nav {
+    display: flex;
+    flex-direction: column;
+    flex: 6;
+}
+
+.filter-dataset .filter-b-nav > a {
+    padding-inline: 5px 15px;
+}
+
+.filter-dataset .filter-b-nav > a:hover {
+    background-color: rgba(211, 211, 211, .3);
 }

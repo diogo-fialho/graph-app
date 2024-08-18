@@ -18,6 +18,39 @@
 <body>
     <div id="alerts" class="alerts">
     </div>
+    <div class="filter-box">
+        <button class="btn btn-primary" >Add filter</button>
+        <div class="filter-content">
+            <div class="row">
+                <div class="col">
+                    <label>Name</label>
+                </div>
+                <div class="col">
+                    <input type="text" name="filter-name" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <label>Value</label>
+                </div>
+                <div class="col">
+                    <input type="text" name="filter-value" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <label>Script</label>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <textarea class="w-100" name="filter-script-content"></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="filter-dataset">
+        </div>
+    </div>
     <div id="tab-graph-template" class="not-visible">
         <div id="graph-{{id}}" class="dialog">
             <div class="cl">
@@ -194,18 +227,29 @@
         const ulTabsElement = document.getElementById('myTab');
         const tabsContents = document.getElementById('myTabContent');
         const graphTabTemplate = document.getElementById('tab-graph-template');
-        const TEST_FILTERS = [
+        const NATIVE_FILTERS = [
             {
-                name: 'Filter 1',
-                value: 4,
-                stringFunc: '{ return pointRaw.y > value }'
+                name: 'Y Greater than 0',
+                value: 0,
+                stringFunc: 'pointRaw.y > value'
             },
             {
-                name: 'Filter 2',
-                value: "2022-01-14 23:00:00",
-                stringFunc: 'pointRaw.x < new Date(value).getTime()'
+                name: 'X Greater than 0',
+                value: 0,
+                stringFunc: 'pointRaw.x > value'
+            },
+            {
+                name: 'Y Less than 0',
+                value: 0,
+                stringFunc: 'pointRaw.y < value'
+            },
+            {
+                name: 'X Less than 0',
+                value: 0,
+                stringFunc: 'pointRaw.x < value'
             }
         ]
+        const ALL_ACTIVE_FILTERS = []
         const FILTER_BASE_FUNC = '(point, pointRaw, value) => ';
         const CONTEXT_MENU = {
             TAG: {
@@ -230,24 +274,23 @@
                 action: (id) => prepareGoBack(id)
             },
             APPLY_FILTER: {
-                text: 'Test Filter',
+                text: 'Filters',
                 visible: true,
                 subMenus: [{
-                    text: TEST_FILTERS[0].name,
-                    visible: true,
-                    action: (id) => lineCharts[id].applyFilters([0], mapFilterWithStringFunc([TEST_FILTERS[0]])) 
-                },
-                {
-                    text: TEST_FILTERS[1].name,
-                    visible: true,
-                    action: (id) => lineCharts[id].applyFilters([0], mapFilterWithStringFunc([TEST_FILTERS[1]])) 
-                }]
-            },
-            REMOVE_FILTER: {
-                text: 'Remove Filter',
-                visible: true,
-                action: (id) => lineCharts[id].applyFilters([0], [])
-            },
+                        text: 'Edit',
+                        visible: true,
+                        class: 'top-a'
+                        // action: TODO: open filters content menu
+                    }].concat(
+                    NATIVE_FILTERS.map(f => {
+                        return {
+                            text: f.name,
+                            visible: true,
+                            class: 'mult-a',
+                            value: f,
+                            action: (id, values) => lineCharts[id].applyFilters([0], mapFilterWithStringFunc(values)) 
+                        }}))
+            }
         };
         const KEYS_TO_VALIDATE = {
             ctrl: {
@@ -303,6 +346,7 @@
         document.getElementById('tab-0').innerHTML = graphTabTemplate.innerHTML.replaceAll('{{id}}', '0');
         document.querySelector('li.new-tab').children[0].addEventListener('click', clickHandler);
         loadCustomListeners();
+        loadFiltersContents([{datasetIdx: 0, name: 'dt1' }], NATIVE_FILTERS);
         
         start(currentTotalTabIdx);
         if (extraTabs.length > 0) {
@@ -719,17 +763,20 @@
             const selector = !id ? '.context-menu:not(.not-visible)' : `#cm-${id}`;
             toggleContextMenu2(selector, event.clientX, event.clientY, id);
             
-            // move this to more standard way when using multiple submenus
+            // TODO: move this to more standard way when using multiple submenus
             let subMenu = document.querySelector('nav.sub-menu:not(.not-visible)');
-            if (subMenu)
+            if (subMenu) {
                 subMenu.classList.add('not-visible')
+            }
         }
 
         function toggleContextMenu2(selector, baseX, baseY, id = undefined, baseWidth = undefined) {
             const menuEle = document.querySelector(selector);
             if (menuEle) {
-                if (!menuEle.classList.contains('not-visible'))
+                if (!menuEle.classList.contains('not-visible')) {
                     menuEle.classList.add('not-visible')
+                    menuEle.querySelectorAll('.m-active').forEach(e => e.classList.remove('m-active'));
+                }
                 else
                     menuEle.classList.remove('not-visible')
 
@@ -769,11 +816,37 @@
                         subMenuNav.innerHTML = '';
                         for (let subkey of subKeys.filter(v => aMenu.subMenus[v].visible)) {
                             let subAMenu = aMenu.subMenus[subkey];
+                            let multElement = subAMenu.class == 'mult-a';
                             let aEle = document.createElement('a');
                             aEle.setAttribute('class', 'nav-link ' + (!subAMenu.class ? '' : subAMenu.class));
-                            aEle.innerText = subAMenu.text;
-                            aEle.addEventListener('click', () => {
-                                if (subAMenu.action)
+                            if (!multElement)
+                                aEle.innerText = subAMenu.text;
+                            else {
+                                let newCBEle = document.createElement('input');
+                                newCBEle.setAttribute('type', 'checkbox');
+                                let newSpanEle = document.createElement('span');
+                                newSpanEle.innerText = subAMenu.text;
+                                aEle.appendChild(newCBEle);
+                                aEle.appendChild(newSpanEle);
+                            }
+                            aEle.addEventListener('click', (e) => {
+                                if (multElement) {
+                                    subAMenu.active = !subAMenu.active;
+                                    if (subAMenu.active){
+                                        aEle.classList.add('mult-active');
+                                        var cbEle = aEle.querySelector('input');
+                                        cbEle.checked = true;
+                                    }
+                                    else {
+                                        aEle.classList.remove('mult-active');
+                                        var cbEle = aEle.querySelector('input');
+                                        cbEle.checked = false;
+                                    }
+
+                                    subAMenu.action(id, aMenu.subMenus.filter(m => m.active).map(m => m.value));
+                                    e.stopPropagation();
+                                }
+                                else if (subAMenu.action)
                                     subAMenu.action(id);
                             });
                             subMenuNav.appendChild(aEle);
@@ -798,6 +871,59 @@
                 f.action = eval(`${FILTER_BASE_FUNC} ${f.stringFunc}`);
                 return f;
             });
+        }
+
+        function showContent(filterOptions) {
+            const formEle = document.querySelector('.filter-content');
+            const nameInput = formEle.querySelector('input[name="filter-name"]');
+            const valueInput = formEle.querySelector('input[name="filter-value"]');
+            const scriptFuncContent = formEle.querySelector('textarea[name="filter-script-content"]');
+            nameInput.value = filterOptions.name;
+            valueInput.value = filterOptions.value;
+            scriptFuncContent.innerText = filterOptions.stringFunc;
+        }
+
+        // datasets should be list of obj { datasetIdx, name }
+        function loadFiltersContents(datasets, filters) {
+            const mainEle = document.querySelector('.filter-dataset');
+            mainEle.innerHTML = '';
+            const filterEle = document.createElement('nav');
+            filterEle.setAttribute('class', 'filter-b-nav');
+            for (let filter of filters) {
+                let newAEle = document.createElement('a');
+                newAEle.addEventListener('click', () => showContent(filter));
+
+                let newCBEle = document.createElement('input');
+                newCBEle.setAttribute('type', 'checkbox');
+                newCBEle.addEventListener('click', (e) => e.stopPropagation());
+                let newSpanEle = document.createElement('span');
+                newSpanEle.innerText = filter.name;
+
+                newAEle.appendChild(newCBEle);
+                newAEle.appendChild(newSpanEle);
+                filterEle.appendChild(newAEle);
+            }
+
+            mainEle.appendChild(filterEle);
+
+            const dtEle = document.createElement('nav');
+            dtEle.setAttribute('class', 'filter-b-nav');
+            for (let dt of datasets) {
+                let newAEle = document.createElement('a');
+                // TODO: click method newAEle.addEventListener('click', () => showContent(filter));
+
+                let newCBEle = document.createElement('input');
+                newCBEle.setAttribute('type', 'checkbox');
+                newCBEle.addEventListener('click', (e) => e.stopPropagation());
+                let newSpanEle = document.createElement('span');
+                newSpanEle.innerText = dt.name;
+
+                newAEle.appendChild(newCBEle);
+                newAEle.appendChild(newSpanEle);
+                dtEle.appendChild(newAEle);
+            }
+
+            mainEle.appendChild(dtEle);
         }
 
         function loadCustomListeners() {
