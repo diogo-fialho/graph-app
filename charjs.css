@@ -256,18 +256,57 @@ table th {
     grid-template-columns: repeat(1, 1fr); */
 }
 
+.context-menu:not(.showing) nav,
+.context-menu nav.sub-menu:not(.showing) {
+    border: 0px;
+}
+
 .context-menu nav.sub-menu {
     position: fixed;
 }
 
-.context-menu .nav-link.w-sub::after {
-    content: '>';
-    position: absolute;
-    right: 8px;
+.context-menu nav.sub-menu.not-visible {
+    position: fixed;
+}
+
+.context-menu .nav-link {
+    display: flex;
+    justify-content: space-between;
+    max-height: 0px;
+    transition: all 0.1s ease-in-out;
+    overflow: hidden;
+}
+
+.context-menu:not(.showing) .nav-link,
+.context-menu nav.sub-menu:not(.showing) .nav-link {
+    padding: 0 !important;
+    border: 0 !important;
+}
+
+.context-menu.showing nav:not(.sub-menu) .nav-link,
+.context-menu nav.sub-menu.showing .nav-link {
+    max-height: 40px;
+    padding-right: 8px;
+}
+
+.context-menu .nav-link span {
+    pointer-events: none;
+}
+
+.context-menu .nav-link span:first-child {
+    padding-right: 100px;
+}
+
+.context-menu .nav-link span.key-action {
+    font-size: 12px;
+    color: #222831;
+}
+
+.context-menu .nav-link.w-sub span.m-symbol {
     transition: transform 0.3s ease-in-out;
 }
 
-.context-menu .nav-link.w-sub.m-active::after {
+.context-menu .nav-link.w-sub.m-active span.m-symbol {
     transform: rotateY(180deg);
 }
 
@@ -296,23 +335,28 @@ table th {
 
 .filter-box {
     position: fixed;
-    width: 400px;
-    height: 400px;
+    width: 600px;
+    /* height: 400px; */
     background: white;
     left: 50%;
     top: 50px;
     transform: translateX(-50%);
     z-index: 10;
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+    padding: 20px;
 }
 
 .filter-dataset  {
     display: flex;
 }
 
+.filter-dataset > div {
+    flex: 6;
+}
+
 .filter-dataset .filter-b-nav {
     display: flex;
     flex-direction: column;
-    flex: 6;
 }
 
 .filter-dataset .filter-b-nav > a {

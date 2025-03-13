@@ -18,34 +18,35 @@
 <body>
     <div id="alerts" class="alerts">
     </div>
-    <div class="filter-box">
-        <button class="btn btn-primary" onclick="LIST_OF_FILTERS.push(loadContentToFilter()); loadFiltersContents([{datasetIdx: 0, name: 'dt1' }], LIST_OF_FILTERS);" >Add filter</button>
-        <button class="btn btn-primary" onclick="savers.FILTERS.save(JSON.stringify(LIST_OF_FILTERS.filter(f => !f.native)))" >Save Filters</button>
-        <div class="filter-content">
-            <div class="row">
+    <div class="filter-box not-visible">
+        <button class="btn btn-primary" onclick="addContentFilter()" >Add filter</button>
+        <button class="btn btn-primary" onclick="savers.FILTERS.save(JSON.stringify(LIST_OF_FILTERS.filter(f => !f.native))); toggleFiltersBox()" >Save Filters</button>
+        <button class="btn btn-secondary" onclick="toggleFiltersBox()" >Close</button>
+        <div class="filter-content mt-4">
+            <div class="row mb-3">
                 <div class="col">
                     <label>Name</label>
                 </div>
                 <div class="col">
-                    <input type="text" name="filter-name" />
+                    <input type="text" name="filter-name" onfocusin="textInputActive = true;" onfocusout="textInputActive = false;" />
                 </div>
             </div>
-            <div class="row">
+            <div class="row mb-3">
                 <div class="col">
                     <label>Value</label>
                 </div>
                 <div class="col">
-                    <input type="text" name="filter-value" />
+                    <input type="text" name="filter-value" onfocusin="textInputActive = true;" onfocusout="textInputActive = false;" />
                 </div>
             </div>
-            <div class="row">
+            <div class="row mb-3">
                 <div class="col">
                     <label>Script</label>
                 </div>
             </div>
-            <div class="row">
+            <div class="row mb-3">
                 <div class="col">
-                    <textarea class="w-100" name="filter-script-content"></textarea>
+                    <textarea class="w-100" name="filter-script-content" onfocusin="textInputActive = true;" onfocusout="textInputActive = false;"></textarea>
                 </div>
             </div>
         </div>
@@ -177,7 +178,7 @@
             </div>
         </div>
         <div id="ga-{{id}}" class="graph-area not-visible">
-            <div id="cm-{{id}}" class="context-menu not-visible">
+            <div id="cm-{{id}}" class="context-menu">
                 <nav class="nav flex-column">
                     <a class="nav-link active" href="#"onclick="prepareGoBack('{{id}}')">Change Config</a>
                     <a class="nav-link text-danger" onclick="confirmAction('Remove selected points?', () => lineCharts['{{id}}'].deleteSelectedChartData())" href="#">Delete</a>
@@ -230,6 +231,20 @@
         const tabsContents = document.getElementById('myTabContent');
         const graphTabTemplate = document.getElementById('tab-graph-template');
         const FILTER_BASE_FUNC = '(point, pointRaw, value) => ';
+        const loadFiltersMenu = () => [{
+                        text: 'Edit',
+                        visible: true,
+                        class: 'top-a',
+                        action: (id) => toggleFiltersBox()
+                    }].concat(
+                    LIST_OF_FILTERS.map(f => {
+                        return {
+                            text: f.name,
+                            visible: true,
+                            class: 'mult-a',
+                            value: f,
+                            action: (id, values) => lineCharts[id].applyFilters([0], mapFilterWithStringFunc(values)) 
+                        }}));
         const savers = {
             TABS_OPTS: new Saver(TABS_CONFIG_SESSION_KEY),
             FILTERS: new Saver(FILTERS_SESSION_KEY)
@@ -262,69 +277,44 @@
             }
             //
         ].concat(JSON.parse(savers.FILTERS.load()) ?? []);
-        const CONTEXT_MENU = {
-            TAG: {
-                text: 'Tag: ',
-                visible: false,
-                action: (id) => lineCharts[id].setSelectedTagById(`tag-name-${id}`)
-            },
-            DELETE: {
-                text: 'Delete',
-                visible: true,
-                class: 'text-danger',
-                action: (id) => confirmAction('Remove selected points?', () => lineCharts[id].deleteSelectedChartData())
-            },
-            EXPORT: {
-                text: 'Export',
-                visible: true,
-                action: (id) => lineCharts[id].exportCSV()
-            },
-            CHANGE_CONFIG: {
-                text: 'Change Config',
-                visible: true,
-                action: (id) => prepareGoBack(id)
-            },
-            APPLY_FILTER: {
-                text: 'Filters',
-                visible: true,
-                subMenus: [{
-                        text: 'Edit',
-                        visible: true,
-                        class: 'top-a'
-                        // action: TODO: open filters content menu
-                    }].concat(
-                    LIST_OF_FILTERS.map(f => {
-                        return {
-                            text: f.name,
-                            visible: true,
-                            class: 'mult-a',
-                            value: f,
-                            action: (id, values) => lineCharts[id].applyFilters([0], mapFilterWithStringFunc(values)) 
-                        }}))
-            }
-        };
         const KEYS_TO_VALIDATE = {
             ctrl: {
+                text: 'ctrl',
                 code: [17],
                 action: undefined
             },
             shift: {
+                text: 'shift',
                 code: [16],
                 action: undefined
             },
             esc: {
+                text: 'esc',
                 code: [27],
                 action: (chartId) => lineCharts[chartId].clearSelected()
             },
             del: {
+                text: 'del',
                 code: [46],
                 action: (chartId) => confirmAction('Remove selected points?', () => lineCharts[chartId].deleteSelectedChartData())
             },
             t:  {
+                text: 't',
                 code: [84],
                 action: (chartId) => lineCharts[chartId].setSelectedTagById(`tag-name-${chartId}`)
             },
+            c:  {
+                text: 'c',
+                code: [67],
+                action: (id) => prepareGoBack(id)
+            },
+            e:  {
+                text: 'e',
+                code: [69],
+                action: (id) => lineCharts[id].exportCSV()
+            },
             ctrl_z: {
+                text: 'ctrl + z',
                 code: [17, 90],
                 action: (chartId) => lineCharts[chartId].undo()
             },
@@ -333,6 +323,36 @@
             //     action: (chartId) => lineCharts[chartId].redo()
             // }
         };
+        const CONTEXT_MENU = {
+            TAG: {
+                text: 'Tag: ',
+                visible: false,
+                actionKey: KEYS_TO_VALIDATE.t
+            },
+            DELETE: {
+                text: 'Delete',
+                visible: true,
+                class: 'text-danger',
+                actionKey: KEYS_TO_VALIDATE.del,
+                // action: (id) => confirmAction('Remove selected points?', () => lineCharts[id].deleteSelectedChartData())
+            },
+            EXPORT: {
+                text: 'Export',
+                visible: true,
+                actionKey: KEYS_TO_VALIDATE.e,
+            },
+            CHANGE_CONFIG: {
+                text: 'Change Config',
+                visible: true,
+                actionKey: KEYS_TO_VALIDATE.c,
+            },
+            APPLY_FILTER: {
+                text: 'Filters',
+                visible: true,
+                subMenus: loadFiltersMenu()
+            }
+        };
+        
         const FEEDBACK_E = {
             default: 'alert-dark',
             success: 'alert-success',
@@ -768,31 +788,32 @@
         }
 
         function toggleContextMenu(event, id = undefined) {
-            const selector = !id ? '.context-menu:not(.not-visible)' : `#cm-${id}`;
+            const selector = !id ? '.context-menu.showing' : `#cm-${id}`;
             toggleContextMenu2(selector, event.clientX, event.clientY, id);
             
             // TODO: move this to more standard way when using multiple submenus
-            let subMenu = document.querySelector('nav.sub-menu:not(.not-visible)');
+            let subMenu = document.querySelector('nav.sub-menu.showing');
             if (subMenu) {
-                subMenu.classList.add('not-visible')
+                subMenu.classList.remove('showing')
             }
         }
 
         function toggleContextMenu2(selector, baseX, baseY, id = undefined, baseWidth = undefined) {
             const menuEle = document.querySelector(selector);
             if (menuEle) {
-                if (!menuEle.classList.contains('not-visible')) {
-                    menuEle.classList.add('not-visible')
+
+                if (menuEle.classList.contains('showing')) {
+                    menuEle.classList.remove('showing')
                     menuEle.querySelectorAll('.m-active').forEach(e => e.classList.remove('m-active'));
                 }
-                else
-                    menuEle.classList.remove('not-visible')
-
-                // check overflow window
-                const diffX = baseX + menuEle.clientWidth > window.innerWidth ? (baseWidth ?? menuEle.clientWidth) : 0;
-                const diffY = baseY + menuEle.clientHeight > window.innerHeight ? menuEle.clientHeight : 0;
-                menuEle.style.left = (baseX - diffX)  + 'px';
-                menuEle.style.top = (baseY - diffY) + 'px';
+                else {
+                    // check overflow window
+                    const diffX = baseX + menuEle.clientWidth > window.innerWidth ? (baseWidth ?? menuEle.clientWidth) : 0;
+                    const diffY = baseY + menuEle.clientHeight > window.innerHeight ? menuEle.clientHeight : 0;
+                    menuEle.style.left = (baseX - diffX)  + 'px';
+                    menuEle.style.top = (baseY - diffY) + 'px';
+                    menuEle.classList.add('showing')
+                }
             }
         }
 
@@ -805,18 +826,36 @@
             for (let key of keys.filter(v => options[v].visible)) {
                 let aMenu = options[key];
                 let aEle = document.createElement('a');
+                let spanEle = document.createElement('span');
                 aEle.setAttribute('class', 'nav-link ' + (!aMenu.class ? '' : aMenu.class));
-                aEle.innerText = aMenu.text;
-                if (aMenu.subMenus)
+                spanEle.innerText = aMenu.text;
+                aEle.appendChild(spanEle);
+                if (aMenu.actionKey) {
+                    let sspanEle = document.createElement('span');
+                    sspanEle.setAttribute('class', 'key-action');
+                    sspanEle.innerHTML = `${aMenu.actionKey.text.Bold()}`;
+                    aEle.appendChild(sspanEle);
+                }
+                
+                if (aMenu.subMenus) {
                     aEle.classList.add('w-sub');
+                    let sspanEle = document.createElement('span');
+                    sspanEle.setAttribute('class', 'm-symbol');
+                    sspanEle.innerHTML = `>`;
+                    aEle.appendChild(sspanEle);
+
+                }       
                 aEle.addEventListener('click', (event) => {
                     if (aMenu.action)
                         aMenu.action(id);
+                    else if (aMenu.actionKey) {
+                        aMenu.actionKey.action(id);
+                    }
                     else if (aMenu.subMenus) {
                         let subMenuNav = menuEle.querySelector('nav.sub-menu');
                         if (!subMenuNav) {
                             subMenuNav = document.createElement('nav');
-                            subMenuNav.setAttribute('class', 'nav flex-column sub-menu not-visible');
+                            subMenuNav.setAttribute('class', 'nav flex-column sub-menu');
                             menuEle.appendChild(subMenuNav);
                         }
 
@@ -825,29 +864,38 @@
                         for (let subkey of subKeys.filter(v => aMenu.subMenus[v].visible)) {
                             let subAMenu = aMenu.subMenus[subkey];
                             let multElement = subAMenu.class == 'mult-a';
-                            let aEle = document.createElement('a');
-                            aEle.setAttribute('class', 'nav-link ' + (!subAMenu.class ? '' : subAMenu.class));
-                            if (!multElement)
-                                aEle.innerText = subAMenu.text;
+                            let aSubEle = document.createElement('a');
+                            aSubEle.setAttribute('class', 'nav-link ' + (!subAMenu.class ? '' : subAMenu.class));
+                            if (!multElement) {
+                                let spanSubEle = document.createElement('span');
+                                spanSubEle.innerText = subAMenu.text;
+                                aSubEle.appendChild(spanSubEle);
+                                if (subAMenu.actionKey) {
+                                    let sspanSubEle = document.createElement('span');
+                                    sspanSubEle.setAttribute('class', 'key-action');
+                                    sspanSubEle.innerHTML = `${subAMenu.actionKey.text.Bold()}`;
+                                    aSubEle.appendChild(sspanSubEle);
+                                }
+                            }
                             else {
                                 let newCBEle = document.createElement('input');
                                 newCBEle.setAttribute('type', 'checkbox');
                                 let newSpanEle = document.createElement('span');
                                 newSpanEle.innerText = subAMenu.text;
-                                aEle.appendChild(newCBEle);
-                                aEle.appendChild(newSpanEle);
+                                aSubEle.appendChild(newCBEle);
+                                aSubEle.appendChild(newSpanEle);
                             }
-                            aEle.addEventListener('click', (e) => {
+                            aSubEle.addEventListener('click', (e) => {
                                 if (multElement) {
                                     subAMenu.active = !subAMenu.active;
                                     if (subAMenu.active){
-                                        aEle.classList.add('mult-active');
-                                        var cbEle = aEle.querySelector('input');
+                                        aSubEle.classList.add('mult-active');
+                                        var cbEle = aSubEle.querySelector('input');
                                         cbEle.checked = true;
                                     }
                                     else {
-                                        aEle.classList.remove('mult-active');
-                                        var cbEle = aEle.querySelector('input');
+                                        aSubEle.classList.remove('mult-active');
+                                        var cbEle = aSubEle.querySelector('input');
                                         cbEle.checked = false;
                                     }
 
@@ -856,12 +904,14 @@
                                 }
                                 else if (subAMenu.action)
                                     subAMenu.action(id);
+                                else if (aMenu.actionKey)
+                                    subAMenu.actionKey.action(id);
                             });
-                            subMenuNav.appendChild(aEle);
+                            subMenuNav.appendChild(aSubEle);
                         }
 
                         toggleContextMenu2('nav.sub-menu', event.target.getBoundingClientRect().left + menuEle.clientWidth, event.target.getBoundingClientRect().top, id, menuEle.clientWidth * 2); // 2 is the number of submenus existing
-                        if (subMenuNav.classList.contains('not-visible'))
+                        if (!subMenuNav.classList.contains('showing'))
                             event.target.classList.remove('m-active');
                         else
                             event.target.classList.add('m-active');
@@ -881,13 +931,31 @@
             });
         }
 
-        function loadContentToFilter(filterOptions) {
+        function loadContentToFilter() {
             const formEle = document.querySelector('.filter-content');
             return {
                 name: formEle.querySelector('input[name="filter-name"]').value,
                 value: formEle.querySelector('input[name="filter-value"]').value,
                 stringFunc: formEle.querySelector('textarea[name="filter-script-content"]').value
             };
+        }
+
+        function addContentFilter() {
+            LIST_OF_FILTERS.push(loadContentToFilter());
+            loadFiltersContents([{datasetIdx: 0, name: 'dt1' }], LIST_OF_FILTERS);
+
+            CONTEXT_MENU.APPLY_FILTER.subMenus = loadFiltersMenu();
+        }
+
+        function toggleFiltersBox(filterOptions) {
+            const boxEle = document.querySelector('.filter-box');
+            let active = !boxEle.classList.contains('not-visible');
+            if (active) {
+                boxEle.classList.add('not-visible');
+            }
+            else {
+                boxEle.classList.remove('not-visible');
+            }
         }
 
         function showContent(filterOptions) {
@@ -904,6 +972,9 @@
         function loadFiltersContents(datasets, filters) {
             const mainEle = document.querySelector('.filter-dataset');
             mainEle.innerHTML = '';
+            const headr = document.createElement('h5');
+            headr.innerText = 'Filters';
+            const filterDiv = document.createElement('div');
             const filterEle = document.createElement('nav');
             filterEle.setAttribute('class', 'filter-b-nav');
             for (let filter of filters) {
@@ -921,8 +992,13 @@
                 filterEle.appendChild(newAEle);
             }
 
-            mainEle.appendChild(filterEle);
+            filterDiv.appendChild(headr);
+            filterDiv.appendChild(filterEle);
+            mainEle.appendChild(filterDiv);
 
+            const headrDts = document.createElement('h5');
+            headrDts.innerText = 'Datasets';
+            const dtDiv = document.createElement('div');
             const dtEle = document.createElement('nav');
             dtEle.setAttribute('class', 'filter-b-nav');
             for (let dt of datasets) {
@@ -940,7 +1016,9 @@
                 dtEle.appendChild(newAEle);
             }
 
-            mainEle.appendChild(dtEle);
+            dtDiv.appendChild(headrDts);
+            dtDiv.appendChild(dtEle);
+            mainEle.appendChild(dtDiv);
         }
 
         function loadCustomListeners() {

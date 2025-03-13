@@ -1,0 +1,45 @@
+
+<style>
+    .not-visible {
+        display: none;
+    }
+
+    .context-menu {
+        position: fixed;
+        min-width: 200px;
+        border: 1px solid gray;
+        z-index: 10;
+    }
+</style>
+
+<div class="context-menu not-visible">
+    <nav>
+        <a>Ola</a>
+        <a>Ola</a>
+    </nav>
+</div>
+<script>
+    function toggleContextMenu(event, onlyClose = false) {
+        const menuEle = document.querySelector('.context-menu');
+        if (menuEle) {
+            menuEle.style.left = event.clientX;
+            menuEle.style.top = event.clientY;
+            
+            if (!menuEle.classList.contains('not-visible'))
+                menuEle.classList.add('not-visible')
+            else if (!onlyClose)
+                menuEle.classList.remove('not-visible')
+        }
+
+    }
+
+    document.addEventListener("contextmenu", (event) => {
+        toggleContextMenu(event);
+        event.preventDefault();
+    });
+
+
+    document.addEventListener("click", (event) => {
+        toggleContextMenu(event, true);
+    });
+</script>

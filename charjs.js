@@ -735,7 +735,7 @@ class DfChart {
         var last_se = [];
         for (let i = 0; i < this.chart.data.datasets.length; i++) {
             last_se.push(this.chart.getDatasetMeta(i).data
-            .filter(p => p.$context.raw?.tags.includes(tagName)));
+            .filter(p => p.$context.raw?.tags?.includes(tagName)));
         }
         this.PLUGINS[0].lastSelected = last_se;
         this.PLUGINS[0].updateLastSelected = true;
