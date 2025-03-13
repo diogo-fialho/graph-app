@@ -323,7 +323,7 @@ class DfBoxSelectPlugin {
             // only if left click
             const leftClick = event.native.button == 0;
             if (leftClick) {
-                const selectData = KEYS_ACTIVE.includes(KEYS_TO_VALIDATE.shift.code[0]);
+                const selectData = KEYS_ACTIVE.includes(KEYS_TO_VALIDATE.alt.code[0]);
                 if (!this.activeMouse && event.type == 'mousedown') {
                     let points_in_evt = chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true);
         
@@ -352,7 +352,7 @@ class DfBoxSelectPlugin {
                     this.lastCoord = [event.native.clientX - canvas_client_rect.left, event.native.clientY - canvas_client_rect.top, event.x, event.y];
                     this.ctx2.clearRect(0, 0, this.ctx2.canvas.width, this.ctx2.canvas.height);
                     this.ctx2.beginPath();
-                    const color = selectData ? this.options.colors.selectBoxColor : this.options.colors.zoomBoxColor;
+                    const color = !selectData ? this.options.colors.selectBoxColor : this.options.colors.zoomBoxColor;
                     this.ctx2.fillStyle = color.convertToRGBA(0.2);
                     this.ctx2.strokeStyle = color;
     
@@ -368,7 +368,7 @@ class DfBoxSelectPlugin {
                     this.activeMouse = false;
                     this.ctx2.clearRect(0, 0, this.ctx2.canvas.width, this.ctx2.canvas.height);
                     if (this.lastCoord) {
-                        if (selectData) {
+                        if (!selectData) {
                             let data_se = [];
                             for (let i = 0; i < chart.data.datasets.length; i++) {
                                 var c_dataset = chart.getDatasetMeta(i);
@@ -584,6 +584,9 @@ class DfChart {
                 datasets: this.loadDatasets(data_loaded)
             },
             options: {
+                animation: {
+                    duration: 0
+                },
                 // improve this
                 plugins: {
                     zoom: {
