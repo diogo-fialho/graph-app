@@ -351,7 +351,9 @@ class DfBoxSelectPlugin {
                                 this.lastSelected[idx] = c_dataset.data.filter(p => p.x >= lower_x_coord && p.x <= max_x_coord);
                                 this.updateLastSelected = this.lastSelected;
                             }
-                            this.lastClicked = points_in_evt[0].element;
+                            else if (!isShift) {
+                                this.lastClicked = points_in_evt[0].element;
+                            }
                         }
                         else
                             this.currentSelected[idx].splice(existing_idx, 1);

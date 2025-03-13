@@ -198,7 +198,7 @@
                         <button onclick="lineCharts['{{id}}'].setSelectedTagById('tag-name-{{id}}')">Set tag</button>
                     </div>
                     <button class="btn btn-outline-secondary btn-sm" onclick="lineCharts['{{id}}'].chart.resetZoom()">Reset Zoom</button>
-                    <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="button" onclick="lineCharts['{{id}}'].toggleOption(OPTIONS_TYPE.ZOOM)">Toggle Zoom</button>
+                    <button class="btn btn-outline-secondary btn-sm" id="toggle-btn-{{id}}" data-bs-toggle="button" onclick="lineCharts['{{id}}'].toggleOption(OPTIONS_TYPE.ZOOM)">Toggle Zoom</button>
                     <!-- <button class="btn btn-outline-secondary btn-sm" onclick="confirmAction('Remove selected points?', () => lineCharts['{{id}}'].deleteSelectedChartData())">Delete Selected</button>
                     <button class="btn btn-outline-secondary btn-sm" onclick="lineCharts['{{id}}'].exportCSV()">Export</button>
                     <button class="btn btn-outline-secondary btn-sm" onclick="prepareGoBack('{{id}}')">Change Config</button> -->
@@ -303,10 +303,15 @@
                 code: [46],
                 action: (chartId) => confirmAction('Remove selected points?', () => lineCharts[chartId].deleteSelectedChartData())
             },
+            a:  {
+                text: 'a',
+                code: [65],
+                action: (chartId) => lineCharts[chartId].setSelectedTagById(`tag-name-${chartId}`)
+            },
             t:  {
                 text: 't',
                 code: [84],
-                action: (chartId) => lineCharts[chartId].setSelectedTagById(`tag-name-${chartId}`)
+                action: (chartId) => document.getElementById(`toggle-btn-${chartId}`).click()
             },
             c:  {
                 text: 'c',
@@ -317,6 +322,11 @@
                 text: 'e',
                 code: [69],
                 action: (id) => lineCharts[id].exportCSV()
+            },
+            r:  {
+                text: 'r',
+                code: [82],
+                action: (id) => lineCharts[id].chart.resetZoom()
             },
             ctrl_z: {
                 text: 'ctrl + z',
