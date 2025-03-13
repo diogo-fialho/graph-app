@@ -313,6 +313,7 @@ class DfBoxSelectPlugin {
         this.currentSelected = {};
         this.lastSelected = {};
         this.updateLastSelected = false;
+        this.lastClicked = undefined;
     }
 
     beforeEvent(chart, args, pluginOptions) {
@@ -324,6 +325,7 @@ class DfBoxSelectPlugin {
             const leftClick = event.native.button == 0;
             if (leftClick) {
                 const selectData = KEYS_ACTIVE.includes(KEYS_TO_VALIDATE.alt.code[0]);
+                const isShift = KEYS_ACTIVE.includes(KEYS_TO_VALIDATE.shift.code[0]);
                 if (!this.activeMouse && event.type == 'mousedown') {
                     let points_in_evt = chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true);
         
@@ -340,8 +342,17 @@ class DfBoxSelectPlugin {
                         }
                         
                         let existing_idx = this.currentSelected[idx].findIndex(v => v.$context.dataIndex == points_in_evt[0].index);
-                        if (existing_idx == -1)
+                        if (existing_idx == -1) {
                             this.currentSelected[idx].push(points_in_evt[0].element);
+                            if (isShift) {
+                                let lower_x_coord = this.lastClicked.x > points_in_evt[0].element.x ? points_in_evt[0].element.x : this.lastClicked.x;
+                                let max_x_coord = this.lastClicked.x > points_in_evt[0].element.x ? this.lastClicked.x : points_in_evt[0].element.x;
+                                var c_dataset = chart.getDatasetMeta(idx);
+                                this.lastSelected[idx] = c_dataset.data.filter(p => p.x >= lower_x_coord && p.x <= max_x_coord);
+                                this.updateLastSelected = this.lastSelected;
+                            }
+                            this.lastClicked = points_in_evt[0].element;
+                        }
                         else
                             this.currentSelected[idx].splice(existing_idx, 1);
         
